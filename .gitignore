@@ -1,0 +1,14 @@
+build
+
+# qt creator
+*.user
+*.autosave
+
+*.pyc
+*.pkl
+
+# vim
+*.un~
+*.swp
+*.ignore
+**/tags

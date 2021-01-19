@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+    <!--Package Header-->
+    <name>mmocrl</name>
+    <version>0.0.1</version>
+    <description>MultiModal Optimal Control and Reinforcement Learning.</description>
+    <license>Proprietary</license>
+    <url type="website">git@github.com:Mathieu-Geisert/mmocrl.git</url>
+    <maintainer email="mathieu@robots.ox.ac.uk">Mathieu Geisert</maintainer>
+    <author email="mathieu@robots.ox.ac.uk">Mathieu Geisert</author>
+    <!--Package Dependencies-->
+    <buildtool_depend>cmake</buildtool_depend>
+    <exec_depend>catkin</exec_depend>
+    <build_depend>eigen3</build_depend>
+    <!--Package Export-->
+    <export>
+        <build_type>cmake</build_type>
+    </export>
+</package>
