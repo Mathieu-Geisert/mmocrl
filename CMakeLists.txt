@@ -51,6 +51,12 @@ target_link_libraries(test_scaling
         ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
 target_compile_options(test_scaling PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
 
+add_executable(test_foot_motion
+        test/test_foot_motion.cpp)
+target_link_libraries(test_foot_motion
+        ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
+target_compile_options(test_foot_motion PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
+
 #add_executable(test_c010
 #        applications/test_c010.cpp)
 #target_link_libraries(test_c010

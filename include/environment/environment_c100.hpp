@@ -395,7 +395,7 @@ class blind_locomotion {
 
     double Angle = 2.0 * M_PI / (double) (Fdxs_.size() - 1);
     Fdxs_.setConstant(0.0);
-    Fdys_.setConstant(0.0);
+    Fdys_.setConstant(0.0)
 
     for (size_t i = 1; i < Fdxs_.size(); i++) {
       const float Cos = std::cos((i - 1) * Angle);
@@ -784,8 +784,6 @@ class blind_locomotion {
       jointPositionTarget_(3 * j + 1) += scaledAction_.tail(12)[3 * j + 1];
       jointPositionTarget_(3 * j + 2) += scaledAction_.tail(12)[3 * j + 2];;
     }
-
-    t_ = 0.0;
   }
 
 
@@ -1721,6 +1719,7 @@ class blind_locomotion {
 
   rai::FuncApprox::MLP_fullyconnected<double, 6, 1, rai::FuncApprox::ActivationType::softsign> actuator_A_;
 
+  
   Eigen::VectorXd u_, u_initialNoiseScale, u0;
   Eigen::VectorXd q_, q_initialNoiseScale, q0;
 
@@ -1744,7 +1743,7 @@ class blind_locomotion {
   std::vector<raisim::Vec<3>> footPos_b;
   std::vector<raisim::Vec<3>> footPos_b_prev;
 
-  std::vector<Eigen::Vector3d> footPos_Target;
+ std::vector<Eigen::Vector3d> footPos_Target;
   std::vector<Eigen::Vector3d> prevfootPos_Target;
   std::vector<Eigen::Vector3d> prevfootPos_Target2;
 

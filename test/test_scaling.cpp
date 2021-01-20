@@ -3,7 +3,8 @@
 // Test program for terrain generation class.
 
 #include <environment/scaling/ScalingAndOffset.hpp>
-#include <environment/motion/IK_c100.hpp>
+#include <environment/motion/ModelParametersAnymalC100.hpp>
+#include <environment/motion/IK.hpp>
 #include <chrono> 
 
 using namespace std::chrono; 
@@ -12,7 +13,7 @@ int main(int argc, char *argv[]) {
 
   double freqScale_ = 0.0025 * 2.0 * M_PI; // 1 Hz 0.0157
   double h0_ = -0.55;
-  Eigen::VectorXd footPositionOffset_, jointNominalConfig_;
+  Eigen::VectorXf footPositionOffset_, jointNominalConfig_;
   Eigen::VectorXf stateOffset_, stateScale_;
   jointNominalConfig_.setZero(12);
   footPositionOffset_.setZero(12);
@@ -25,12 +26,15 @@ int main(int argc, char *argv[]) {
                          -0.3 - 0.1, 0.2, h0_,
                          -0.3 - 0.1, -0.2, h0_;
 
-  InverseKinematics IK_;
-  Eigen::Vector3d sol;
+  ModelParametersAnymalC100<float> c100Params_;
+  InverseKinematics IK_(c100Params_);
+  Eigen::Vector3f sol;
   for (int i = 0; i < 4; i++) {
     IK_.IKSagittal(sol, footPositionOffset_.segment(3 * i, 3), i);
     jointNominalConfig_.segment(3 * i, 3) = sol;
   }
+
+  std::cout << "jointNomialeConfig: " << jointNominalConfig_.transpose() <<std::endl;
 
   /// state params
   stateOffset_ << 0.0, 0.0, 0.0, /// command
