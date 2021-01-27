@@ -6,6 +6,8 @@
 
 #include <Eigen/Core>
 
+//TODO: clean std::vector vs Matrix and harmonize shapes.
+
 template<typename T, int Nlimb>
 class ModelParametersBase {
 
@@ -17,6 +19,9 @@ class ModelParametersBase {
       positionThighToShankInThighFrame_.resize(Nlimb);
       positionShankToFootInShankFrame_.resize(Nlimb);
       //positionBaseToHAACenterInBaseFrame.resize(Nlimb);
+      
+      footIds_.resize(Nlimb);
+      footNames_.resize(Nlimb);
     }
 
     ~ModelParametersBase() = default;
@@ -30,8 +35,10 @@ class ModelParametersBase {
     const Eigen::Matrix<T, Nlimb*3, 1>& getReferenceJointConfiguration() const { return referenceJointConfiguration_; }
 
     const T& getReferenceHight() const { return referenceHight_; }
-    const Eigen::Matrix<float, Nlimb*3, 1>& getReferenceFootPositionOffset() const { return referenceFootPositionOffset_; }
+    const Eigen::Matrix<T, Nlimb*3, 1>& getReferenceFootPositionOffset() const { return referenceFootPositionOffset_; }
 
+    const std::vector<uint>& getFootIds() const { return footIds_; }
+    const std::vector<std::string>& getFootNames() const { return footNames_; }
     //const Eigen::Matrix<T, Nlimb, 1>& getHAAToFootYOffset() { return HAAToFootYOffset_; }
     //const Eigen::Matrix<T, Nlimb, 1>& getHFEToFootYOffset() { return HFEToFootYOffset_; }
 
@@ -46,7 +53,10 @@ class ModelParametersBase {
 
     T referenceHight_;
     Eigen::Matrix<T, Nlimb*3, 1> referenceFootPositionOffset_;
-    
+   
+    std::vector<uint> footIds_;
+    std::vector<std::string> footNames_;
+
     //Eigen::Matrix<T, Nlimb, 1> HAAToFootYOffset_;
     //Eigen::Matrix<T, Nlimb, 1> HFEToFootYOffset_;
 };

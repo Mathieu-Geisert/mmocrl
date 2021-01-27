@@ -100,7 +100,7 @@ class JointVelPosErrorHistory {
   
   public:
     JointVelPosErrorHistory(raisim::ArticulatedSystem* anymal)
-     : anymal_(anymal), jointVelHist_(), jointPosHist_()
+     : anymal_(anymal), jointVelHist_(), jointPosErrorHist_()
     {
       reset();
     }
@@ -110,7 +110,8 @@ class JointVelPosErrorHistory {
     void reset()
     {
       jointVelHist_.reset(anymal_->getGeneralizedVelocity().e().template cast<T>());
-      jointPosHist_.reset();
+      jointPosErrorHist_.reset();
+      jointPosTargetHist_.reset(anymal_->getGeneralizedCoordinate().e().template cast<T>());
     }
 
     int getNJoint() { return nJoint; }
@@ -119,17 +120,17 @@ class JointVelPosErrorHistory {
     void appendCurrentState(const Eigen::Matrix<T, -1, 1> targetJointPosition)
     {
       jointVelHist_.appendValue(anymal_->getGeneralizedVelocity().e().template cast<T>());
-      jointPosHist_.appendValue(targetJointPosition.tail(nJoint) - anymal_->getGeneralizedCoordinate().e().template cast<T>().tail(nJoint));
+      jointPosErrorHist_.appendValue(targetJointPosition.tail(nJoint) - anymal_->getGeneralizedCoordinate().e().template cast<T>().tail(nJoint));
     }
 
     Eigen::Matrix<T, nJoint, 1> getLastJointPositionError(int iter = 1)
     {
-      return jointPosHist_.getLastJointValue(iter);
+      return jointPosErrorHist_.getLastJointValue(iter);
     }
 
     T getLastJointPositionError(int actId, int iter)
     {
-      return jointPosHist_.getLastJointValue(actId, iter);
+      return jointPosErrorHist_.getLastJointValue(actId, iter);
  
     }
 
@@ -143,6 +144,15 @@ class JointVelPosErrorHistory {
       return jointVelHist_.getLastJointValue(actId, iter);
     }
 
+    Eigen::Matrix<T, nJoint, 1> getLastJointPositionTarget(int iter = 1)
+    {
+      return jointPosTargetHist_.getLastJointValue(iter);
+    }
+
+    T getLastJointPositionTarget(int actId, int iter)
+    {
+      return jointPosTargetHist_.getLastJointValue(actId, iter);
+    }
   protected:
 
    // template<typename T2>
@@ -157,5 +167,5 @@ class JointVelPosErrorHistory {
    // }
 
     raisim::ArticulatedSystem *anymal_;
-    JointHistory<T, jointHistoryLength, nJoint> jointVelHist_, jointPosHist_;
+    JointHistory<T, jointHistoryLength, nJoint> jointVelHist_, jointPosErrorHist_, jointPosTargetHist_;
 };

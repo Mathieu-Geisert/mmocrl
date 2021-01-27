@@ -21,7 +21,10 @@
 #pragma once
 
 #include "common/message_macros.hpp"
-#include <common/RandomNumberGenerator.hpp>
+#include "common/RandomNumberGenerator.hpp"
+#include "environment/motion/ModelParametersBase.hpp"
+
+//TODO: adjust matrix template???
 
 namespace terrain {
 
@@ -37,14 +40,14 @@ enum TerrainType {
 
 constexpr const double PixelSize = 0.02;
 
-
+template<typename T, int Nlimb> 
 class TerrainGenerator {
  
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   public:
-    TerrainGenerator(raisim::World* world, double xSize=10., double ySize=10.)
-     : world_(world), terrainGenerator_()
+    TerrainGenerator(raisim::World* world, const ModelParametersBase<T, Nlimb>& modelParameters, double xSize=10., double ySize=10.)
+     : world_(world), terrainGenerator_(), footNames_(modelParameters.getFootNames())   
     {
       terrainProp_.xSize = xSize;
       terrainProp_.ySize = ySize;
@@ -63,17 +66,12 @@ class TerrainGenerator {
       heights_.resize(terrainProp_.xSamples * terrainProp_.ySamples, 0.0);
       world_->setERP(0.1, 0.0);
       
-      for (int i = 0; i < 4; i++) {
-        footNames_[i] = "foot";
-        footNames_[i] += std::to_string(i);
-      }
-
       setFootFriction(0.9);
     }
 
     ~TerrainGenerator() = default;
 
-  Eigen::Vector3d getTerrainNormal(double posX, double posY, double delta = 1.0)
+  Eigen::Vector3d getTerrainNormal(double posX, double posY, double delta = 1.0) const
   {
     Eigen::Matrix<double, 3, 1> terrainNormal;
     if (terrainType_ == TerrainType::Flat) {
@@ -96,7 +94,7 @@ class TerrainGenerator {
     return terrainNormal;
   }
 
-  double getHeight(const double& posX, const double& posY)
+  double getHeight(const double& posX, const double& posY) const
   {
     if (terrainType_ == TerrainType::Flat) {
       return 0.;
@@ -107,16 +105,19 @@ class TerrainGenerator {
   }
 
   void setFootFriction(double c_f) {
-    for (int idx=0; idx<4; idx++) {
+    for (int idx=0; idx<Nlimb; idx++) {
       footFriction_[idx] = c_f;
       world_->setMaterialPairProp("terrain", footNames_[idx], footFriction_[idx], 0.0, 0.0);
     }
   }
 
   void setFootFriction(int idx, double c_f) {
+    FATAL_IF(idx >= Nlimb, "[setFootFriction] idx out of bound...");
     footFriction_[idx] = c_f;
     world_->setMaterialPairProp("terrain", footNames_[idx], footFriction_[idx], 0.0, 0.0);
   }
+
+  const Eigen::Matrix<T, Nlimb, 1>& getFootFriction() const { return footFriction_; }
 
   //void setRandomFriction(double low, double mid) {
   //  for (int i = 0; i < 4; i++) {
@@ -384,8 +385,8 @@ class TerrainGenerator {
     TerrainType terrainType_;
     raisim::HeightMap* terrain_;
     std::vector<double> heights_;
-    std::string footNames_[4];
-    double footFriction_[4];
+    std::vector<std::string> footNames_;
+    Eigen::Matrix<T, Nlimb, 1> footFriction_;
     RandomNumberGenerator<float> rn_;
     int seed_ = 0;
 }; // end of clann TerrainGenerator

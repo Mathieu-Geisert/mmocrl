@@ -9,11 +9,6 @@
 
 namespace Math {
 class MathFunc {
-  typedef Eigen::Matrix<double, 3, 3> RotationMatrix;
-  typedef Eigen::Matrix<double, 3, 1> EulerVector;
-  typedef Eigen::Matrix<double, 3, 1> Axis;
-  typedef Eigen::Matrix<double, 4, 1> Quaternion;
-
 
  public:
   template<typename T>
@@ -21,28 +16,31 @@ class MathFunc {
     return (T(0) < val) - (val < T(0));
   }
 
-  static inline RotationMatrix skewM(Eigen::Vector3d &vec) {
-    RotationMatrix mat;
+  template<typename T>
+  static inline Eigen::Matrix<T, 3, 3> skewM(Eigen::Matrix<T, 3, 1> &vec) {
+    Eigen::Matrix<T, 3, 3> mat;
     mat << 0.0, -vec(2), vec(1),
         vec(2), 0.0, -vec(0),
         -vec(1), vec(0), 0.0;
     return mat;
   }
 
-  static inline RotationMatrix expM(EulerVector &vec) {
-    RotationMatrix rot;
+  template<typename T>
+  static inline Eigen::Matrix<T, 3, 3> expM(Eigen::Matrix<T, 3, 1> &vec) {
+    Eigen::Matrix<T, 3, 3> rot;
     double angle = vec.norm();
-    if (angle < 1e-10) return RotationMatrix::Identity();
-    Axis axis = vec / angle;
-    Eigen::Matrix3d vecSkew = skewM(axis);
-    rot = RotationMatrix::Identity() + sin(angle) * vecSkew + (1.0 - cos(angle)) * vecSkew * vecSkew;
+    if (angle < 1e-10) return Eigen::Matrix<T, 3, 3>::Identity();
+    Eigen::Matrix<T, 3, 1> axis = vec / angle;
+    Eigen::Matrix<T, 3, 3> vecSkew = skewM(axis);
+    rot = Eigen::Matrix<T, 3, 3>::Identity() + sin(angle) * vecSkew + (1.0 - cos(angle)) * vecSkew * vecSkew;
     return rot;
   }
 
-  static inline RotationMatrix expM(double angle, Axis &axis) {
-    RotationMatrix rot;
+  template<typename T>
+  static inline Eigen::Matrix<T, 3, 3> expM(double angle, Eigen::Matrix<T, 3, 1> &axis) {
+    Eigen::Matrix<T, 3, 3> rot;
     Eigen::Matrix3d vecSkew = skewM(axis);
-    rot = RotationMatrix::Identity() + sin(angle) * vecSkew + (1.0 - cos(angle)) * vecSkew * vecSkew;
+    rot = Eigen::Matrix<T, 3, 3>::Identity() + sin(angle) * vecSkew + (1.0 - cos(angle)) * vecSkew * vecSkew;
     return rot;
   }
 
@@ -54,9 +52,11 @@ class MathFunc {
         if (abs(matrix(rowID, colID)) > threshold)
           matrix(rowID, colID) = getSign(Dtype(1.0)) * threshold;
   }
-  static inline Quaternion EulertoQuat(double roll, double pitch,  double yaw)
+  
+  template<typename T>
+  static inline Eigen::Matrix<T, 4, 1> EulertoQuat(double roll, double pitch,  double yaw)
   {
-    Quaternion q;
+    Eigen::Matrix<T, 4, 1> q;
     double t0 = std::cos(yaw * 0.5);
     double t1 = std::sin(yaw * 0.5);
     double t2 = std::cos(roll * 0.5);
@@ -71,7 +71,8 @@ class MathFunc {
     return q;
   }
 
-  static inline void QuattoEuler(const Quaternion& q, double& roll, double& pitch, double& yaw)
+  template<typename T>
+  static inline void QuattoEuler(const Eigen::Matrix<T, 4, 1>& q, double& roll, double& pitch, double& yaw)
   {
     double ysqr = q[2] * q[2];
 
@@ -92,8 +93,9 @@ class MathFunc {
     yaw = std::atan2(t3, t4);
   }
 
-  static inline RotationMatrix quatToRotMat(Quaternion &q) {
-    RotationMatrix R;
+  template<typename T>
+  static inline Eigen::Matrix<T, 3, 3> quatToRotMat(Eigen::Matrix<T, 4, 1> &q) {
+    Eigen::Matrix<T, 3, 3> R;
     R << q(0) * q(0) + q(1) * q(1) - q(2) * q(2) - q(3) * q(3),
         2 * q(1) * q(2) - 2 * q(0) * q(3),
         2 * q(0) * q(2) + 2 * q(1) * q(3),
@@ -108,8 +110,9 @@ class MathFunc {
     return R;
   }
 
-  static inline Quaternion rotMatToQuat(RotationMatrix &R) {
-    Quaternion quat;
+  template<typename T>
+  static inline Eigen::Matrix<T, 4, 1> rotMatToQuat(Eigen::Matrix<T, 3, 3> &R) {
+    Eigen::Matrix<T, 4, 1> quat;
     double tr = R.trace();
     if (tr > 0.0) {
       double S = sqrt(tr + 1.0) * 2.0; // S=4*qw
@@ -140,8 +143,9 @@ class MathFunc {
   }
 
 
-  static inline Quaternion quatMultiplication(Quaternion &q, Quaternion &p) {
-    Quaternion quat;
+  template<typename T>
+  static inline Eigen::Matrix<T, 4, 1> quatMultiplication(Eigen::Matrix<T, 4, 1> &q, Eigen::Matrix<T, 4, 1> &p) {
+    Eigen::Matrix<T, 4, 1> quat;
     quat << p(0) * q(0) - p(1) * q(1) - p(2) * q(2) - p(3) * q(3),
         p(0) * q(1) + p(1) * q(0) - p(2) * q(3) + p(3) * q(2),
         p(0) * q(2) + p(1) * q(3) + p(2) * q(0) - p(3) * q(1),
@@ -149,8 +153,9 @@ class MathFunc {
     return quat;
   }
 
-  static inline Quaternion boxplusB_Frame(Quaternion &quat, EulerVector &rotation) {
-    Quaternion quat2;
+  template<typename T>
+  static inline Eigen::Matrix<T, 4, 1> boxplusB_Frame(Eigen::Matrix<T, 4, 1> &quat, Eigen::Matrix<T, 3, 1> &rotation) {
+    Eigen::Matrix<T, 4, 1> quat2;
     double norm = rotation.norm();
     double halfNorm = 0.5 * norm;
     double sinHalfNorm = sin(halfNorm);
@@ -159,13 +164,15 @@ class MathFunc {
     return quatMultiplication(quat, quat2);
   }
 
-  static inline Quaternion boxplusI_Frame(Quaternion &quat, EulerVector &rotation) {
-    RotationMatrix rotmat = expM(rotation);
-    Quaternion quat2 = rotMatToQuat(rotmat);
+  template<typename T>
+  static inline Eigen::Matrix<T, 4, 1> boxplusI_Frame(Eigen::Matrix<T, 4, 1> &quat, Eigen::Matrix<T, 3, 1> &rotation) {
+    Eigen::Matrix<T, 3, 3> rotmat = expM(rotation);
+    Eigen::Matrix<T, 4, 1> quat2 = rotMatToQuat(rotmat);
     return quatMultiplication(quat2, quat);
   }
 
-  static inline void normalizeQuat(Quaternion &q) {
+  template<typename T>
+  static inline void normalizeQuat(Eigen::Matrix<T, 4, 1> &q) {
     double norm = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
     q[0] = q[0] / norm;
     q[1] = q[1] / norm;
@@ -173,19 +180,21 @@ class MathFunc {
     q[3] = q[3] / norm;
   }
 
-  static inline Quaternion angleAxisToQuat(double angle, Axis &axis) {
-    Quaternion quat;
+  template<typename T>
+  static inline Eigen::Matrix<T, 4, 1> angleAxisToQuat(double angle, Eigen::Matrix<T, 3, 1> &axis) {
+    Eigen::Matrix<T, 4, 1> quat;
     quat << cos(angle / 2.0), axis * sin(angle / 2.0);
     return quat;
   }
 
-  static inline Quaternion rotateQuatByAngleAxis(Quaternion &q, double angle, Axis &axis) {
+  template<typename T>
+  static inline Eigen::Matrix<T, 4, 1> rotateQuatByAngleAxis(Eigen::Matrix<T, 4, 1> &q, double angle, Eigen::Matrix<T, 3, 1> &axis) {
 
-//  Quaternion quat;
-//  quat = quatMultiplication(angleAxisToQuat(angle, axis), q);
+//  Eigen::Matrix<T, 4, 1> quat;
+//  quat = quatMultiplication(angleEigen::Matrix<T, 3, 1>ToQuat(angle, axis), q);
 //  return quat;
 
-    EulerVector vector = angle * axis;
+    Eigen::Matrix<T, 3, 1> vector = angle * axis;
     return boxplusI_Frame(q, vector);
   }
 
@@ -218,12 +227,14 @@ class MathFunc {
   }
 
   /// gives you the smaller angle difference
-  static inline double angleDiff(double a, double b) {
+  template<typename T>
+  static inline T angleDiff(T a, T b) {
     return M_PI - std::fabs(std::fmod(std::fabs(a - b), 2.0 * M_PI) - M_PI);
   }
 
   /// gives you the smaller angle difference, positive if a is more clockwise
-  static inline double angleDiffSigned(double a, double b) {
+  template<typename T>
+  static inline T angleDiffSigned(T a, T b) {
     double diff = std::fmod(a - b, 2.0 * M_PI);
     if (diff > 0) {
       return (diff > M_PI) ? diff - 2.0 * M_PI : diff;

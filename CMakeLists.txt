@@ -57,6 +57,12 @@ target_link_libraries(test_foot_motion
         ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
 target_compile_options(test_foot_motion PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
 
+add_executable(test_contacts
+        test/test_contacts.cpp)
+target_link_libraries(test_contacts
+        ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
+target_compile_options(test_contacts PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
+
 #add_executable(test_c010
 #        applications/test_c010.cpp)
 #target_link_libraries(test_c010

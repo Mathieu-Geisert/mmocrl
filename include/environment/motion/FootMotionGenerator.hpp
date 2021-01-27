@@ -21,6 +21,7 @@
 #pragma once
 
 #include "common/message_macros.hpp"
+#include "environment/observation/State.hpp"
 
 template<typename T, int Nleg>
 class FootMotionGenerator {
@@ -28,14 +29,15 @@ class FootMotionGenerator {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   public:
-    FootMotionGenerator(const ModelParametersBase<T, Nleg>& model, double baseFreq, double clearance, double control_dt)
+    FootMotionGenerator(const ModelParametersBase<T, Nleg>& model, const State<T>& robotState, double baseFreq, double clearance, double control_dt)
     : baseFreq_(baseFreq), 
       control_dt_(control_dt),
-      footPositionOffset_(model.getReferenceFootPositionOffset())
+      footPositionOffset_(model.getReferenceFootPositionOffset()),
+      robotState_(robotState)
     {
       clearance_.setConstant(clearance);
 
-     //init pi_
+     //init pi_ and piD_
       for (size_t i = 0; i < Nleg; i++) {
         //pi_[i] = 2.0 * M_PI * rn_.sampleUniform01();
         if (i==0 || i==3)
@@ -43,19 +45,20 @@ class FootMotionGenerator {
         else
           pi_[i] = 0.;
         pi_[i] = anglemod(pi_[i]);
+        piD_[i] = baseFreq_; 
       }
     }
 
     ~FootMotionGenerator() = default;
 
-    Eigen::Matrix<T, Nleg*3, 1> advance(const Eigen::Matrix<T, Nleg, 1>& deltaFrequency, const Eigen::Matrix<T, 3, 1>& gravityVectorInBaseFrame)
+    Eigen::Matrix<T, Nleg*3, 1> advance(const Eigen::Matrix<T, Nleg, 1>& deltaFrequency)
     {
       Eigen::Matrix<T, Nleg*3, 1> footPos_Target(footPositionOffset_);
-      Eigen::Matrix<T, 3, 1> gravityNormalized(gravityVectorInBaseFrame);
-      gravityNormalized.normalize();
+      const Eigen::Matrix<T, 3, 1>& e_g = robotState_.getGravityAxis();
 
       for (size_t j = 0; j < Nleg; j++) {
-        pi_[j] += (deltaFrequency[j] + baseFreq_) * 2.0 * M_PI * control_dt_;
+        piD_[j] = deltaFrequency[j] + baseFreq_; 
+        pi_[j] += piD_[j] * 2.0 * M_PI * control_dt_;
         pi_[j] = anglemod(pi_[j]);
         T dh = 0.0;
         if (pi_[j] > 0.0) {
@@ -74,7 +77,7 @@ class FootMotionGenerator {
         }
   
         footPos_Target[j*3+2] = 0.0;
-        footPos_Target.segment(j*3, 3) += gravityNormalized * (footPositionOffset_[3 * j + 2] + dh);
+        footPos_Target.segment(j*3, 3) += e_g * (footPositionOffset_[3 * j + 2] + dh);
       }
     }
 
@@ -85,6 +88,7 @@ class FootMotionGenerator {
 
     void setPhases(Eigen::Matrix<T, Nleg, 1> phases) { pi_ = phases; }
     const Eigen::Matrix<T, Nleg, 1>& setPhases() const { return pi_; }
+    const Eigen::Matrix<T, Nleg, 1>& getFrequencies() const { return piD_; }
     void setBaseFrequency(double baseFreq) { baseFreq_ = baseFreq; }
     void updateControlDt(double control_dt) { control_dt_ = control_dt; }
   
@@ -108,6 +112,8 @@ class FootMotionGenerator {
     T control_dt_;
     Eigen::Matrix<T, Nleg, 1> clearance_;
     Eigen::Matrix<T, Nleg, 1> pi_;
+    Eigen::Matrix<T, Nleg, 1> piD_;
     const Eigen::Matrix<T, Nleg*3, 1>& footPositionOffset_;
+    const State<T>& robotState_;
 }; // end of class FootMotionGenerator
 

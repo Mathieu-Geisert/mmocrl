@@ -49,6 +49,11 @@ class ModelParametersAnymalC100 : public ModelParametersBase<T, 4> {
     this->positionShankToFootInShankFrame_[2][2] += 0.0225;
     this->positionShankToFootInShankFrame_[3][2] += 0.0225;
 
+    for (int k = 0; k < 4; k++) {
+      this->footIds_[k] = 3 * k + 3;
+      this->footNames_[k] = "foot" + std::to_string(k);
+    }
+
     //for (size_t i = 0; i < 4; i++) {
     //  this->positionBaseToHAACenterInBaseFrame_[i] = this->positionBaseToHipInBaseFrame_[i];
     //  this->positionBaseToHAACenterInBaseFrame_[i][0] += this->positionHipToThighInHipFrame_[i][0];

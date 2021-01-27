@@ -5,6 +5,7 @@
 #include <raisim/World.hpp>
 #include "raisim/RaisimServer.hpp"
 #include "environment/terrain/TerrainGenerator.hpp"
+#include "environment/motion/ModelParametersAnymalC100.hpp"
 #include <chrono> 
 using namespace std::chrono; 
 
@@ -13,8 +14,9 @@ int main(int argc, char *argv[]) {
   raisim::World* world = new raisim::World();
   raisim::RaisimServer* server = new raisim::RaisimServer(world);
   server->launchServer();
- 
-  terrain::TerrainGenerator terrainGenerator(world);
+
+  ModelParametersAnymalC100<float> paramsC100;
+  terrain::TerrainGenerator terrainGenerator(world, paramsC100);
 
   Eigen::Matrix<double, 3, 1> params;
  

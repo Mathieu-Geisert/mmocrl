@@ -1610,8 +1610,8 @@ class blind_locomotion {
     R_b_noisy = Math::MathFunc::quatToRotMat(quat2);
     e_g_noisy_ = R_b_noisy.row(2).transpose();
 
-    double r, p, y;
-    Math::MathFunc::QuattoEuler(quat, r, p, y);
+    //double r, p, y;
+    //Math::MathFunc::QuattoEuler(quat, r, p, y);
 
     State state_unscaled;
 

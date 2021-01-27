@@ -7,6 +7,7 @@
 #include "environment/terrain/TerrainGenerator.hpp"
 #include "environment/actuator/ActuatorModelPD.hpp"
 #include "environment/actuator/ActuatorModelPNetwork.hpp"
+#include "environment/motion/ModelParametersAnymalC100.hpp"
 #include <chrono> 
 
 using namespace std::chrono; 
@@ -21,7 +22,9 @@ int main(int argc, char *argv[]) {
   server->launchServer();
   raisim::ArticulatedSystem* anymal = world->addArticulatedSystem(urdf_path);
   world->setTimeStep(0.0025);
-  terrain::TerrainGenerator terrainGenerator(world);
+
+  ModelParametersAnymalC100<float> paramsC100;
+  terrain::TerrainGenerator terrainGenerator(world, paramsC100);
 
   int gcDim = anymal->getGeneralizedCoordinateDim();
   int gvDim = anymal->getDOF();

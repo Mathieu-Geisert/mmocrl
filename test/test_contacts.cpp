@@ -9,8 +9,7 @@
 #include "environment/motion/FootMotionGenerator.hpp"
 #include "environment/actuator/ActuatorModelPNetwork.hpp"
 #include "environment/motion/IK.hpp"
-#include "environment/observation/State.hpp"
-#include "common/RandomNumberGenerator.hpp"
+#include "environment/terrain/ContactManager.hpp"
 #include <chrono> 
 
 using namespace std::chrono; 
@@ -26,8 +25,19 @@ int main(int argc, char *argv[]) {
   raisim::ArticulatedSystem* anymal = world->addArticulatedSystem(urdf_path);
   world->setTimeStep(0.0025);
 
+  int npoint = 20;
+  server->lockVisualizationServerMutex();
+  std::vector<raisim::Visuals*> terrainVisual;
+  for (int i=0; i<4; i++) {
+    for (int j=0; j<npoint; j++) {
+      terrainVisual.push_back(server->addVisualSphere("foot"+std::to_string(i)+"_p"+std::to_string(j), 0.1 , 1., 0., 0., 1.));
+    }
+  }
+  server->unlockVisualizationServerMutex();
   ModelParametersAnymalC100<float> c100Params;
+  State<float> robotState(anymal);
   terrain::TerrainGenerator terrainGenerator(world, c100Params);
+  ContactManager contact(anymal, robotState, terrainGenerator, 0.0025);
   InverseKinematics IK(c100Params);
   ActuatorModelPNetwork<float> actuator(anymal, actuator_network_path);
 
@@ -39,9 +49,7 @@ int main(int argc, char *argv[]) {
   gc_init.head(7) << 0, 0, 0.50, 1.0, 0.0, 0.0, 0.0;
   gc_init.tail(12) = c100Params.getReferenceJointConfiguration();
   anymal->setState(gc_init.template cast<double>(), gv_init.template cast<double>());
-
-  RandomNumberGenerator<float> rn;
-  NoisyState robotState(anymal, rn);
+ 
   FootMotionGenerator footMotion(c100Params, robotState, 2, 0.2, 0.0025);
   Eigen::Vector3f e_g, sol;
   e_g.setZero();
@@ -56,7 +64,7 @@ int main(int argc, char *argv[]) {
   for (int i=0; i<max_it; i++) {
     //std::cout << "inter: " << i << std::endl;
     auto start = high_resolution_clock::now();
-    robotState.updateState();
+    robotState.advance();
     foot_target = footMotion.advance(deltaFreq);
     auto stop = high_resolution_clock::now();
     for (int j = 0; j < 4; j++) {
@@ -67,6 +75,23 @@ int main(int argc, char *argv[]) {
     actuator.advance();
     time[i] = std::chrono::duration<double>(duration_cast<microseconds>(stop - start)).count(); 
     server->lockVisualizationServerMutex();
+    Eigen::Matrix<float, 6, -1> dfoot = contact.getFootHeightWrtLocalTerrain(npoint);
+    raisim::Vec<3> footPosW;
+    for (size_t fid = 0; fid < 4; fid++) {
+      int footID = 3 * fid + 3;
+      raisim::Vec<3> footPos =anymal->getCollisionBodies()[4 * fid + 4].posOffset;
+      //std::cout << "footPos " << fid << " : " << footPos[0] << " " << footPos[1] << " " << footPos[2] << std::endl; 
+      anymal->getPosition(footID, footPos, footPosW);
+      for (int fp=0; fp<npoint; fp++) {
+        raisim::Vec<3> pos;
+        pos.setZero();
+       pos[0] = dfoot(4, fp);
+       pos[1] = dfoot(5, fp);
+       pos[2] = -dfoot(fid, fp);
+        pos += footPosW;
+        terrainVisual[fid*npoint + fp]->setPosition(pos[0], pos[1], pos[2]);
+      }
+    }
     world->integrate();
     server->unlockVisualizationServerMutex();
     usleep(2500);
