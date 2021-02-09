@@ -27,6 +27,7 @@ class ScalingAndOffset {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   public:
+    ScalingAndOffset() {}
     ScalingAndOffset(Eigen::Matrix<T, -1, 1> scaling, Eigen::Matrix<T, -1, 1> offset)
     : scaling_(scaling),
       offset_(offset) 
@@ -51,7 +52,7 @@ class ScalingAndOffset {
 
     ~ScalingAndOffset() = default;
 
-    Eigen::Matrix<T, -1, 1> apply(const Eigen::Matrix<T, -1, 1>& input)
+    Eigen::Matrix<T, -1, 1> apply(const Eigen::Matrix<T, -1, 1>& input) const
     {
       FATAL_IF(input.size() != scaling_.size(), "input vector does not have the same size as scaling/offset...");
       return (input - offset_).cwiseProduct(scaling_);
@@ -62,7 +63,7 @@ class ScalingAndOffset {
     void setOffset(const Eigen::Matrix<T, -1, 1>& offset) { offset_ = offset; }
     const Eigen::Matrix<T, -1, 1>& getOffset() { return offset_; }
 
-    void saveToFile(std::string file_path)
+    void saveToFile(std::string file_path) const
     {
       YAML::Node yamlParams;
       for (int i=0; i<scaling_.size(); i++) {

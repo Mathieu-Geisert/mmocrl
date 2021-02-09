@@ -4,7 +4,7 @@
 
 #include <raisim/World.hpp>
 #include <raisim/RaisimServer.hpp>
-#include "environment/terrain/TerrainGenerator.hpp"
+#include "environment/terrain/Terrain.hpp"
 #include "environment/motion/ModelParametersAnymalC100.hpp"
 #include "environment/motion/FootMotionGenerator.hpp"
 #include "environment/actuator/ActuatorModelPNetwork.hpp"
@@ -26,8 +26,9 @@ int main(int argc, char *argv[]) {
   raisim::ArticulatedSystem* anymal = world->addArticulatedSystem(urdf_path);
   world->setTimeStep(0.0025);
 
+  RandomNumberGenerator<float> rn;
   ModelParametersAnymalC100<float> c100Params;
-  terrain::TerrainGenerator terrainGenerator(world, c100Params);
+  Terrain terrainGenerator(world, c100Params, rn);
   InverseKinematics IK(c100Params);
   ActuatorModelPNetwork<float> actuator(anymal, actuator_network_path);
 
@@ -40,7 +41,6 @@ int main(int argc, char *argv[]) {
   gc_init.tail(12) = c100Params.getReferenceJointConfiguration();
   anymal->setState(gc_init.template cast<double>(), gv_init.template cast<double>());
 
-  RandomNumberGenerator<float> rn;
   NoisyState robotState(anymal, rn);
   FootMotionGenerator footMotion(c100Params, robotState, 2, 0.2, 0.0025);
   Eigen::Vector3f e_g, sol;

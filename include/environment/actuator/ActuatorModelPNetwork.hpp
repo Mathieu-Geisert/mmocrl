@@ -56,6 +56,7 @@ class ActuatorModelPNetwork : public ActuatorModelBase<T> {
     {
       actuator_A_.updateParamFromTxt(actuator_path);
       this->anymal_->setControlMode(raisim::ControlMode::FORCE_AND_TORQUE);
+      reset();
     }
 
     ~ActuatorModelPNetwork() = default;
@@ -84,8 +85,13 @@ class ActuatorModelPNetwork : public ActuatorModelBase<T> {
         tau(6 + actId) = actuator_A_.forward(seaInput)[0] * PNetwork::TorScaling;
       }
 
+      //if (isnan(tau.norm())) {
+      //  std::cout << "tau is nan..." << std::endl;
+      //}
       this->anymal_->setGeneralizedForce(tau.template cast<double>());
-    } 
+    }
+ 
+    const JointVelPosErrorHistory<T, PNetwork::JointHistoryLength, PNetwork::NJoint>& getHistory() const { return  jointHist_; }
 
   protected:
     rai::FuncApprox::MLP_fullyconnected<T, PNetwork::NNInputSize, 1, rai::FuncApprox::ActivationType::softsign> actuator_A_;

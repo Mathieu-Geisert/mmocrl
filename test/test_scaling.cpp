@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   ScalingAndOffset<float> state(stateScale_, stateOffset_);
   std::cout << "Write file" << std::endl;
 
-  std::string file_path = "/home/mgeisert/git/mmocrl/rsc/scaling/test.yaml";
+  std::string file_path = "/home/mgeisert/git/mmocrl/rsc/scaling/state.yaml";
   state.saveToFile(file_path);
 
   std::cout << "Constructor from file." << std::endl;

@@ -4,10 +4,11 @@
 
 #include <raisim/World.hpp>
 #include "raisim/RaisimServer.hpp"
-#include "environment/terrain/TerrainGenerator.hpp"
+#include "environment/terrain/Terrain.hpp"
 #include "environment/actuator/ActuatorModelPD.hpp"
 #include "environment/actuator/ActuatorModelPNetwork.hpp"
 #include "environment/motion/ModelParametersAnymalC100.hpp"
+#include "common/RandomNumberGenerator.hpp"
 #include <chrono> 
 
 using namespace std::chrono; 
@@ -23,8 +24,9 @@ int main(int argc, char *argv[]) {
   raisim::ArticulatedSystem* anymal = world->addArticulatedSystem(urdf_path);
   world->setTimeStep(0.0025);
 
+  RandomNumberGenerator<float> rn;
   ModelParametersAnymalC100<float> paramsC100;
-  terrain::TerrainGenerator terrainGenerator(world, paramsC100);
+  Terrain terrainGenerator(world, paramsC100, rn);
 
   int gcDim = anymal->getGeneralizedCoordinateDim();
   int gvDim = anymal->getDOF();

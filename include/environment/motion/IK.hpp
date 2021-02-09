@@ -16,17 +16,6 @@ class InverseKinematics {
   InverseKinematics(const ModelParametersBase<T, Nlimb>& model) 
   //: model_(model)
   {
-    a1_squared_ = model.getPositionThighToShankInThighFrame()[0][0] * model.getPositionThighToShankInThighFrame()[0][0]
-        + model.getPositionThighToShankInThighFrame()[0][2] * model.getPositionThighToShankInThighFrame()[0][2];
-    a2_squared_ = model.getPositionShankToFootInShankFrame()[0][0] * model.getPositionShankToFootInShankFrame()[0][0]
-        + model.getPositionShankToFootInShankFrame()[0][2] * model.getPositionShankToFootInShankFrame()[0][2];
-
-    minReachSP_ = std::abs(sqrt(a1_squared_) - sqrt(a2_squared_)) + 0.1;
-    maxReachSP_ = sqrt(a1_squared_) + sqrt(a2_squared_) - 0.05;
-    minReach_ = std::sqrt(haa_to_foot_y_offset_[0] * haa_to_foot_y_offset_[0] + minReachSP_ * minReachSP_);
-    maxReach_ = sqrt(haa_to_foot_y_offset_[0] * haa_to_foot_y_offset_[0] + maxReachSP_ * maxReachSP_);
-    KFEOffset_ = std::abs(std::atan(model.getPositionShankToFootInShankFrame()[0][0] / model.getPositionShankToFootInShankFrame()[0][2]));
-    
     positionBaseToHAACenterInBaseFrame_.resize(4);
     positionBaseToHAACenterInBaseFrame_ = model.getPositionBaseToHipInBaseFrame();
     for (size_t i = 0; i < 4; i++) {
@@ -36,6 +25,17 @@ class InverseKinematics {
       haa_to_foot_y_offset_[i] = hfe_to_foot_y_offset_[i];
       haa_to_foot_y_offset_[i] += model.getPositionHipToThighInHipFrame()[i][1];
     }
+
+    a1_squared_ = model.getPositionThighToShankInThighFrame()[0][0] * model.getPositionThighToShankInThighFrame()[0][0]
+        + model.getPositionThighToShankInThighFrame()[0][2] * model.getPositionThighToShankInThighFrame()[0][2];
+    a2_squared_ = model.getPositionShankToFootInShankFrame()[0][0] * model.getPositionShankToFootInShankFrame()[0][0]
+        + model.getPositionShankToFootInShankFrame()[0][2] * model.getPositionShankToFootInShankFrame()[0][2];
+
+    minReachSP_ = std::abs(sqrt(a1_squared_) - std::sqrt(a2_squared_)) + 0.1;
+    maxReachSP_ = std::sqrt(a1_squared_) + std::sqrt(a2_squared_) - 0.05;
+    minReach_ = std::sqrt(haa_to_foot_y_offset_[0] * haa_to_foot_y_offset_[0] + minReachSP_ * minReachSP_);
+    maxReach_ = std::sqrt(haa_to_foot_y_offset_[0] * haa_to_foot_y_offset_[0] + maxReachSP_ * maxReachSP_);
+    KFEOffset_ = std::abs(std::atan(model.getPositionShankToFootInShankFrame()[0][0] / model.getPositionShankToFootInShankFrame()[0][2]));
   }
 
   ~InverseKinematics() = default;
@@ -54,6 +54,20 @@ class InverseKinematics {
       cz * cy, -sz * cx + cz * sy * sx, sz * sx + cz * sy * cx,
         sz * cy, cz * cx + sz * sy * sx, -cz * sx + sz * sy * cx,
         -sy, cy * sx, cy * cx;
+  }
+
+  Eigen::Matrix<T, Nlimb*3, 1> IKSagittal(Eigen::Matrix<T, Nlimb*3, 1> foot_target) const
+  {
+    Eigen::Matrix<T, Nlimb*3, 1> gc_target;
+    Eigen::Matrix<T, 3, 1> sol;
+    for (int j = 0; j < Nlimb; j++) {
+      IKSagittal(sol, foot_target.segment(3 * j, 3), j);
+      if (isnan(sol.norm())) {
+      }
+      gc_target.segment(3 * j, 3) = sol;
+    }
+
+    return gc_target;
   }
 
   inline bool IKSagittal(

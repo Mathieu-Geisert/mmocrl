@@ -11,6 +11,25 @@ namespace Math {
 class MathFunc {
 
  public:
+
+  template<typename T>
+  static inline T anglemod(T a) {
+    return wrapAngle((a + M_PI)) - M_PI;
+  }
+
+  template<typename T>
+  static inline T wrapAngle(T a) {
+    double twopi = 2.0 * M_PI;
+    return a - twopi * fastfloor(a / twopi);
+  }
+
+  template<typename T>
+  static inline int fastfloor(T a) {
+    int i = int(a);
+    if (i > a) i--;
+    return i;
+  }
+
   template<typename T>
   static inline int getSign(T val) {
     return (T(0) < val) - (val < T(0));

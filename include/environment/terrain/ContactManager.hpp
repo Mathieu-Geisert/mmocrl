@@ -22,32 +22,49 @@
 
 #include "common/message_macros.hpp"
 #include "common/math.hpp"
-#include "environment/terrain/TerrainGenerator.hpp"
+#include "environment/terrain/Terrain.hpp"
 
 //TODO: adjust footPos to avoid using hardcoded index for the collision bodies and footID.
 //TODO: clean code relative to contact. add more getter if necessary.
-//TODO: clean footposOffset?
 
 template<typename T, int Nlimb>
 class ContactManager {
 public:
-  ContactManager(raisim::ArticulatedSystem* anymal, const State<T>& robotState, const terrain::TerrainGenerator<T, Nlimb>& terrain, double simulation_dt)
+  ContactManager(raisim::ArticulatedSystem* anymal, const State<T>& robotState, const Terrain<T, Nlimb>& terrain, double simulation_dt)
    :anymal_(anymal), robotState_(robotState), terrain_(terrain), simulation_dt_(simulation_dt)
   {
-    footNormal_.resize(Nlimb);
-    footNormal_b.resize(Nlimb);
-    footPos_.resize(Nlimb);
+    footNormal_.reserve(Nlimb);
+    footNormal_b.reserve(Nlimb);
+    footPos_.reserve(Nlimb);
+    footVel_.reserve(Nlimb);
+    footAngVel_.reserve(Nlimb);
+    netFootContacts_.reserve(Nlimb);
+    netFootContacts_b.reserve(Nlimb);
+    netFootContactVels_.reserve(Nlimb);
+    footPosInShankFrame_.reserve(Nlimb);
+    footVelProjected_.reserve(Nlimb);
+
+    for (int i=0; i<Nlimb; i++) {
+      footPosInShankFrame_[i] = anymal_->getCollisionBodies()[4 * i + 4].posOffset;
+    }
   } 
 
   ~ContactManager() = default;
 
+  void advance(bool updateLocalTerrainInfo = true, bool updateContactsInfo = true)
+  {
+    if (updateLocalTerrainInfo)
+      updateFootHeightWrtLocalTerrain();
+    if (updateContactsInfo)
+      updateContacts();
+  }
 
   // Info priviledged state: FootPos_W - FHs, FootContactState, netFootContact_b, footNormal_b, footFriction, thighContacts, shankContacts.
 
   void updateContacts() {
 
     std::vector<size_t> FootContactNums; FootContactNums.resize(Nlimb);
-    
+   
     numContact_ = anymal_->getContacts().size();
     numFootContact_ = 0;
     numBaseContact_ = 0;
@@ -63,7 +80,7 @@ public:
       netFootContacts_[k].setZero();
       netFootContacts_b[k].setZero();
       netFootContactVels_[k].setZero();
-      FootContactNums_[k] = 0;
+      footContactNums_[k] = 0;
       footNormal_[k].setZero();
       footNormal_b[k] << 0.0, 0.0, 1.0;
     }
@@ -74,9 +91,8 @@ public:
     //position of the feet
     for (int k = 0; k < Nlimb; k++) {
       int footID = 3 * k + 3;
-      raisim::Vec<3> footPosInShankFrame = anymal_->getCollisionBodies()[4 * k + 4].posOffset;
-      anymal_->getPosition(footID, footPosInShankFrame, footPos_[k]);
-      anymal_->getVelocity(footID, footPosInShankFrame, footVel_[k]);
+      anymal_->getPosition(footID, footPosInShankFrame_[k], footPos_[k]);
+      anymal_->getVelocity(footID, footPosInShankFrame_[k], footVel_[k]);
       anymal_->getAngularVelocity(footID, footAngVel_[k]);
     }
 
@@ -96,12 +112,12 @@ public:
 
             if (err < 0.035) {
               netFootContacts_[fid] +=
-                  (anymal_->getContacts()[k].getContactFrame().e() * anymal_->getContacts()[k].getImpulse()->e());
+                  (anymal_->getContacts()[k].getContactFrame().e() * anymal_->getContacts()[k].getImpulse()->e()).template cast<T>();
 
               anymal_->getContactPointVel(k, vec3);
-              netFootContactVels_[fid] += vec3.e();
-              footNormal_[fid] += anymal_->getContacts()[k].getNormal().e();
-              FootContactNums_[fid]++;
+              netFootContactVels_[fid] += vec3.e().template cast<T>();
+              footNormal_[fid] += anymal_->getContacts()[k].getNormal().e().template cast<T>();
+              footContactNums_[fid]++;
               footContacts_[fid] = true;
               numFootContact_++;
             } else {
@@ -125,16 +141,16 @@ public:
     //netContacts_b = Rb.transpose() * netContacts_;
 
     for (size_t i = 0; i < 4; i++) {
-      if (FootContactNums_[i] > 0) {
-        netFootContactVels_[i] /= FootContactNums_[i];
+      if (footContactNums_[i] > 0) {
+        netFootContactVels_[i] /= footContactNums_[i];
         netFootContacts_[i] /= simulation_dt_;
         netFootContacts_[i] = netFootContacts_[i].array().min(200.0); // For stability
         netFootContacts_[i] = netFootContacts_[i].array().max(-200.0); // For stability
         footNormal_[i].normalize();
         footNormal_b[i] = Rb.transpose() * footNormal_[i];
         netFootContacts_b[i] = Rb.transpose() * netFootContacts_[i];
-        double scale = footNormal_[i].dot(footVel_[i].e());
-        footVelProjected_[i] = footVel_[i].e() - scale * footNormal_[i];
+        double scale = footNormal_[i].dot(footVel_[i].e().template cast<T>());
+        footVelProjected_[i] = footVel_[i].e().template cast<T>() - scale * footNormal_[i];
       } else {
         footVelProjected_[i].setZero();
       }
@@ -142,10 +158,10 @@ public:
   }
 
 
-  Eigen::Matrix<T, Nlimb+2, -1>  getFootHeightWrtLocalTerrain(int nbPoint = 9, double footMargin = 0.13)
+  void  updateFootHeightWrtLocalTerrain(int nbPoint = 9, double footMargin = 0.13)
   {
-    Eigen::Matrix<T, Nlimb+2, -1> out(Nlimb+2, nbPoint); // dz_foot1, ..., dz_footn, dx, dy
-    out.setZero(); 
+    footHeightWrtLocalTerrain_.resize(Nlimb+2, nbPoint); // dz_foot1, ..., dz_footn, dx, dy
+    footHeightWrtLocalTerrain_.setZero(); 
 
     //TODO: avoid recomputing angles? 
     auto Rb = robotState_.getRotationMatrix();
@@ -157,65 +173,67 @@ public:
     for (size_t i = 1; i < nbPoint; i++) {
       const float Cos = std::cos((i - 1) * Angle);
       const float Sin = std::sin((i - 1) * Angle);
-      out(Nlimb, i) += (Cos * x[0]);
-      out(Nlimb, i) += (Sin * y[0]);
+      footHeightWrtLocalTerrain_(Nlimb, i) += (Cos * x[0]);
+      footHeightWrtLocalTerrain_(Nlimb, i) += (Sin * y[0]);
 
-      out(Nlimb+1, i) += (Cos * x[1]);
-      out(Nlimb+1, i) += (Sin * y[1]);
+      footHeightWrtLocalTerrain_(Nlimb+1, i) += (Cos * x[1]);
+      footHeightWrtLocalTerrain_(Nlimb+1, i) += (Sin * y[1]);
     }
 
     raisim::Vec<3> footPosW;
     for (size_t fid = 0; fid < Nlimb; fid++) {
       int footID = 3 * fid + 3;
-      raisim::Vec<3> footPosInShankFrame = anymal_->getCollisionBodies()[4 * fid + 4].posOffset;
-      anymal_->getPosition(footID, footPosInShankFrame, footPosW);
+      anymal_->getPosition(footID, footPosInShankFrame_[fid], footPosW);
       for (size_t k = 0; k < nbPoint; k++) {
-        out(fid, k) = footPosW[2] -
-            terrain_.getHeight(footPosW[0] + out(Nlimb, k), footPosW[1] + out(Nlimb+1, k));
+        footHeightWrtLocalTerrain_(fid, k) = footPosW[2] -
+            terrain_.getHeight(footPosW[0] + footHeightWrtLocalTerrain_(Nlimb, k), footPosW[1] + footHeightWrtLocalTerrain_(Nlimb+1, k));
       }
     }
-
-    return out;
   }
 
   const std::vector<Eigen::Matrix<T, 3, 1>>& getNetFootContactsInBase() const { return netFootContacts_b; }
-  const std::vector<Eigen::Matrix<T, 3, 1>>& getFootNormalInBase() const { return footNormal_b; }
+  const std::vector<Eigen::Matrix<T, 3, 1>>& getFootNormalsInBase() const { return footNormal_b; }
+  const std::array<bool, Nlimb>& getFootContacts() const { return footContacts_; }
   const std::array<bool, Nlimb>& getShankContacts() const { return shankContacts_; }
   const std::array<bool, Nlimb>& getThighContacts() const { return thighContacts_; }
+  const Eigen::Matrix<T, Nlimb+2, -1>& getFootHeightWrtLocalTerrain() const { return footHeightWrtLocalTerrain_; }
+  bool isBaseContact() const { return numBaseContact_ > 0; }
+  bool isInternalContact() const { return numInternalContact_ > 0; }
 
-  protected:
-    Eigen::Matrix<double, 3, 1> xHorizontal_, yHorizontal_; //in body frame
+protected:
+  Eigen::Matrix<double, 3, 1> xHorizontal_, yHorizontal_; //in body frame
+
+  std::vector<raisim::Vec<3>> footPosInShankFrame_;
+  std::vector<raisim::Vec<3>> footPos_;
+  std::vector<raisim::Vec<3>> footVel_;
+  std::vector<Eigen::Matrix<T, 3, 1>> footVelProjected_;
+  std::vector<raisim::Vec<3>> footAngVel_;
   
-    std::vector<raisim::Vec<3>> footPos_;
-    std::vector<raisim::Vec<3>> footVel_;
-    std::vector<Eigen::Matrix<T, 3, 1>> footVelProjected_;
-    std::vector<raisim::Vec<3>> footAngVel_;
-    
-    std::vector<Eigen::Matrix<T, 3, 1>> footNormal_;
-    std::vector<Eigen::Matrix<T, 3, 1>> footNormal_b;
-    
-    std::array<bool, Nlimb> footContacts_;
-    std::array<bool, Nlimb> shankContacts_;
-    std::array<bool, Nlimb> thighContacts_;
- 
-    size_t numContact_;
-    size_t numFootContact_;
-    size_t numShankContact_;
-    size_t numThighContact_;
-    size_t numBaseContact_;
-    size_t numInternalContact_;
-    std::vector<Eigen::Matrix<T, 3, 1>> netFootContacts_;
-    std::vector<Eigen::Matrix<T, 3, 1>> netFootContacts_b;
-    std::vector<Eigen::Matrix<T, 3, 1>> netFootContactVels_;
-//    Eigen::Vector3d netContacts_;
-//    Eigen::Vector3d netContacts_b;
-    std::vector<size_t> FootContactNums_;
+  std::vector<Eigen::Matrix<T, 3, 1>> footNormal_;
+  std::vector<Eigen::Matrix<T, 3, 1>> footNormal_b;
   
-    //Eigen::Matrix<T, Nlimb+2, -1> terrainLocalHeight_; // z_foot1, ..., z_footn, dx, dy
-    
-    raisim::ArticulatedSystem* anymal_;
-    const State<T>& robotState_;
-    const terrain::TerrainGenerator<T, Nlimb>& terrain_;
-    double simulation_dt_;
+  std::array<bool, Nlimb> footContacts_;
+  std::array<bool, Nlimb> shankContacts_;
+  std::array<bool, Nlimb> thighContacts_;
+
+  size_t numContact_;
+  size_t numFootContact_;
+  size_t numShankContact_;
+  size_t numThighContact_;
+  size_t numBaseContact_;
+  size_t numInternalContact_;
+  std::vector<Eigen::Matrix<T, 3, 1>> netFootContacts_;
+  std::vector<Eigen::Matrix<T, 3, 1>> netFootContacts_b;
+  std::vector<Eigen::Matrix<T, 3, 1>> netFootContactVels_;
+//  Eigen::Vector3d netContacts_;
+//  Eigen::Vector3d netContacts_b;
+  Eigen::Matrix<uint, 1, Nlimb> footContactNums_;
+
+  Eigen::Matrix<T, Nlimb+2, -1> footHeightWrtLocalTerrain_; // z_foot1, ..., z_footn, dx, dy
+  
+  raisim::ArticulatedSystem* anymal_;
+  const State<T>& robotState_;
+  const Terrain<T, Nlimb>& terrain_;
+  double simulation_dt_;
 }; // end of class State
 

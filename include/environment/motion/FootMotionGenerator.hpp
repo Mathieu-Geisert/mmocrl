@@ -21,6 +21,7 @@
 #pragma once
 
 #include "common/message_macros.hpp"
+#include "common/math.hpp"
 #include "environment/observation/State.hpp"
 
 template<typename T, int Nleg>
@@ -36,7 +37,13 @@ class FootMotionGenerator {
       robotState_(robotState)
     {
       clearance_.setConstant(clearance);
+      reset();
+    }
 
+    ~FootMotionGenerator() = default;
+
+    void reset()
+    {
      //init pi_ and piD_
       for (size_t i = 0; i < Nleg; i++) {
         //pi_[i] = 2.0 * M_PI * rn_.sampleUniform01();
@@ -44,12 +51,10 @@ class FootMotionGenerator {
           pi_[i] = M_PI;
         else
           pi_[i] = 0.;
-        pi_[i] = anglemod(pi_[i]);
+        pi_[i] = Math::MathFunc::anglemod(pi_[i]);
         piD_[i] = baseFreq_; 
       }
     }
-
-    ~FootMotionGenerator() = default;
 
     Eigen::Matrix<T, Nleg*3, 1> advance(const Eigen::Matrix<T, Nleg, 1>& deltaFrequency)
     {
@@ -59,7 +64,7 @@ class FootMotionGenerator {
       for (size_t j = 0; j < Nleg; j++) {
         piD_[j] = deltaFrequency[j] + baseFreq_; 
         pi_[j] += piD_[j] * 2.0 * M_PI * control_dt_;
-        pi_[j] = anglemod(pi_[j]);
+        pi_[j] = Math::MathFunc::anglemod(pi_[j]);
         T dh = 0.0;
         if (pi_[j] > 0.0) {
           T t = pi_[j] / M_PI_2;
@@ -79,35 +84,20 @@ class FootMotionGenerator {
         footPos_Target[j*3+2] = 0.0;
         footPos_Target.segment(j*3, 3) += e_g * (footPositionOffset_[3 * j + 2] + dh);
       }
+      return footPos_Target;
     }
-
-    const Eigen::Matrix<T, Nleg, 1>& getCurrentPhases() { return pi_; }
 
     void setClearance(double clearance) { clearance_.setConstant(clearance); }
     void setClearance(Eigen::Matrix<T, Nleg, 1> clearance) { clearance_ = clearance; }
 
     void setPhases(Eigen::Matrix<T, Nleg, 1> phases) { pi_ = phases; }
-    const Eigen::Matrix<T, Nleg, 1>& setPhases() const { return pi_; }
+    const Eigen::Matrix<T, Nleg, 1>& getPhases() const { return pi_; }
     const Eigen::Matrix<T, Nleg, 1>& getFrequencies() const { return piD_; }
     void setBaseFrequency(double baseFreq) { baseFreq_ = baseFreq; }
+    double getBaseFrequency() const { return baseFreq_; }
     void updateControlDt(double control_dt) { control_dt_ = control_dt; }
   
   protected:
-    inline T anglemod(T a) {
-      return wrapAngle((a + M_PI)) - M_PI;
-    }
-
-    inline T wrapAngle(T a) {
-      double twopi = 2.0 * M_PI;
-      return a - twopi * fastfloor(a / twopi);
-    }
-
-    inline int fastfloor(T a) {
-      int i = int(a);
-      if (i > a) i--;
-      return i;
-    }
-
     T baseFreq_;
     T control_dt_;
     Eigen::Matrix<T, Nleg, 1> clearance_;

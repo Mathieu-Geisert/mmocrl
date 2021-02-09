@@ -11,7 +11,10 @@
 #include "environment/motion/IK.hpp"
 #include "environment/terrain/ContactManager.hpp"
 #include "common/RandomNumberGenerator.hpp"
-#include "environment/terrain/LocalTerrainViewer.hpp"
+#include "environment/disturbance/PushDisturbance.hpp"
+#include "environment/observation/InternalObservation.hpp"
+#include "environment/command/Command.hpp"
+#include "environment/command/CommandViewer.hpp"
 #include <chrono> 
 
 using namespace std::chrono; 
@@ -27,57 +30,70 @@ int main(int argc, char *argv[]) {
   raisim::ArticulatedSystem* anymal = world->addArticulatedSystem(urdf_path);
   world->setTimeStep(0.0025);
 
-  int npoint = 20;
   RandomNumberGenerator<float> rn;
+  PushDisturbance disturbance(anymal, rn);
   ModelParametersAnymalC100<float> c100Params;
   State<float> robotState(anymal);
   Terrain terrainGenerator(world, c100Params, rn);
+  Command command(robotState, rn);
+  CommandViewer commandViewer(server, robotState, command, terrainGenerator);
+
   ContactManager contact(anymal, robotState, terrainGenerator, 0.0025);
-  LocalTerrainViewer terrainViewer(server, anymal, contact);
+  //PrivilegedObservation<float, 4> observation(contact, terrainGenerator, robotState, disturbance);
+
   InverseKinematics IK(c100Params);
   ActuatorModelPNetwork<float> actuator(anymal, actuator_network_path);
 
+  FootMotionGenerator footMotion(c100Params, robotState, 2, 0.2, 0.0025);
+
+  InternalObservation obs(robotState, command, footMotion, actuator);
+
+  //Init
   int gcDim = anymal->getGeneralizedCoordinateDim();
   int gvDim = anymal->getDOF();
   Eigen::VectorXf gc_init, gv_init;
   gc_init.setZero(gcDim);
-  gv_init.setZero(gvDim);
-  gc_init.head(7) << 0, 0, 0.50, 1.0, 0.0, 0.0, 0.0;
+  gv_init.setZero(gvDim); gv_init[0] = 0.5;
+  gc_init.head(7) << 0, 0, 0.50, 0.707, 0.0, 0.0, 0.707;
   gc_init.tail(12) = c100Params.getReferenceJointConfiguration();
   anymal->setState(gc_init.template cast<double>(), gv_init.template cast<double>());
- 
-  FootMotionGenerator footMotion(c100Params, robotState, 2, 0.2, 0.0025);
-  Eigen::Vector3f e_g, sol;
-  e_g.setZero();
-  e_g[2] = 1.;
-   
+  
+  Eigen::Vector3f sol;
   Eigen::Matrix<float, 12, 1> gc_target, foot_target;
   Eigen::Vector4f deltaFreq;
   deltaFreq.setZero();
   
-  int max_it = 8000;
+  command.sampleGoal();
+  command.updateCommand();
+
+  int max_it = 6000;
   Eigen::VectorXd time(max_it);
   for (int i=0; i<max_it; i++) {
-    //std::cout << "inter: " << i << std::endl;
     auto start = high_resolution_clock::now();
+    command.updateCommand();
     robotState.advance();
     foot_target = footMotion.advance(deltaFreq);
-    auto stop = high_resolution_clock::now();
     for (int j = 0; j < 4; j++) {
       IK.IKSagittal(sol, foot_target.segment(3 * j, 3), j);
       gc_target.segment(3 * j, 3) = sol;
     }
     actuator.setTargetJointPosition(gc_target);
     actuator.advance();
-    time[i] = std::chrono::duration<double>(duration_cast<microseconds>(stop - start)).count(); 
     server->lockVisualizationServerMutex();
-    contact.updateFootHeightWrtLocalTerrain(npoint);
-    terrainViewer.advance();
     world->integrate();
+    //std::cout << "obs: " << obs.getObservation().transpose() << std::endl;
+    commandViewer.advance();
     server->unlockVisualizationServerMutex();
+    
+    std::cout << "baseVelInBaseFrame: " << robotState.getBaseVelInBaseFrame().transpose() << std::endl; 
+
+    auto stop = high_resolution_clock::now();
+    time[i] = std::chrono::duration<double>(duration_cast<microseconds>(stop - start)).count(); 
     usleep(2500);
-    if (i%400 == 0)
+    if (i%1200 == 0) {
+      command.sampleGoal();
       std::cout << "s=" << i/400 << std::endl;
+    }
   }
   std::cout << "mean time (us): " << time.mean() << std::endl;
  

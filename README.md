@@ -3,7 +3,7 @@ MultiModal Optimal Control and Reinforcement Learning
 
 #TODO
 
-Setup environment: Inverse kinematics, Actuator NN, Foot trajectory planner (RSL/TOWR).
+Setup environment: Add History for student NN, add interface to easily add noise on the observation or other, better organize noise on gravity axis.
 
 Setup Terrain: terrains description (RSL/SIdd), Implement terrain difficulty particule filter.
 

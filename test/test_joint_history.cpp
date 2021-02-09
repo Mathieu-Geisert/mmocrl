@@ -5,8 +5,9 @@
 #include <raisim/World.hpp>
 #include "raisim/RaisimServer.hpp"
 #include "environment/motion/ModelParametersAnymalC100.hpp"
-#include "environment/terrain/TerrainGenerator.hpp"
+#include "environment/terrain/Terrain.hpp"
 #include "environment/history/JointHistory.hpp"
+#include "common/RandomNumberGenerator.hpp"
 #include <chrono> 
 
 using namespace std::chrono; 
@@ -18,10 +19,12 @@ int main(int argc, char *argv[]) {
   raisim::World* world = new raisim::World();
   raisim::RaisimServer* server = new raisim::RaisimServer(world);
   server->launchServer();
+
   raisim::ArticulatedSystem* anymal = world->addArticulatedSystem(urdf_path);
 
+  RandomNumberGenerator<float> rn;
   ModelParametersAnymalC100<float> paramsC100;
-  terrain::TerrainGenerator terrainGenerator(world, paramsC100);
+  Terrain terrainGenerator(world, paramsC100, rn);
 
   int gcDim = anymal->getGeneralizedCoordinateDim();
   int gvDim = anymal->getDOF();

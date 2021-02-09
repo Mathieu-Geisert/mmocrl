@@ -28,6 +28,7 @@
 
 //TODO: be agnostic to the number of joints.
 //TODO: try to automate updateSate ???
+//TODO: better organize noisy orientation vs real orientation.
 
 template<typename T>
 class State {
@@ -35,6 +36,8 @@ class State {
     State(raisim::ArticulatedSystem* anymal)
      :anymal_(anymal)
     {
+      q_.setZero(19);
+      u_.setZero(18);
       updateState(); 
     } 
   
@@ -47,30 +50,34 @@ class State {
   
     virtual void updateState() 
     {
-      q_ = anymal_->getGeneralizedCoordinate().e().template cast<T>();
-      u_ = anymal_->getGeneralizedVelocity().e().template cast<T>();
+      Eigen::Matrix<T, -1, 1> q_temp = anymal_->getGeneralizedCoordinate().e().template cast<T>();
+      Eigen::Matrix<T, -1, 1> u_temp = anymal_->getGeneralizedVelocity().e().template cast<T>();
       
-      if (isnan(u_.norm()) || isinf(u_.norm()) || isnan(q_.norm()) || isinf(q_.norm())) {
+      if (isnan(u_temp.norm()) || isinf(u_temp.norm()) || isnan(q_temp.norm()) || isinf(q_temp.norm())) {
+        std::cout << "state badly conditioned..." << std::endl;
         badlyConditioned_ = true;
       }
       else {
+        q_ = q_temp;
+        u_ = u_temp;
         badlyConditioned_ = false;
       }
      
       updateDependantVariables();
     }
 
-    const Eigen::Matrix<T, -1, 1>& getJointPos() const { return q_.template tail<12>(); }
-    const Eigen::Matrix<T, -1, 1>& getJointVel() const { return u_.template tail<12>(); }
-    const Eigen::Matrix<T, 3, 1>& getBasePos() const { return q_.template head<3>(); }
-    const Eigen::Matrix<T, 3, 1>& getBaseVel() const { return u_.template head<3>(); }
-    const Eigen::Matrix<T, 3, 1>& getBaseAngVel() const { return u_.template segment<3>(3); }
+    Eigen::Matrix<T, -1, 1> getJointPos() const { return q_.template tail<12>(); }
+    Eigen::Matrix<T, -1, 1> getJointVel() const { return u_.template tail<12>(); }
+    Eigen::Matrix<T, 3, 1> getBasePos() const { return q_.template head<3>(); }
+    Eigen::Matrix<T, 3, 1> getBaseVel() const { return u_.template head<3>(); }
+    Eigen::Matrix<T, 3, 1> getBaseVelInBaseFrame() const { return Rb_.transpose()*u_.template head<3>(); }
+    Eigen::Matrix<T, 3, 1> getBaseAngVel() const { return u_.template segment<3>(3); }
+    Eigen::Matrix<T, 3, 1> getBaseAngVelInBaseFrame() const { return Rb_.transpose()*u_.template segment<3>(3); }
     const Eigen::Matrix<T, 3, 3>& getRotationMatrix() const { return Rb_; }
     const Eigen::Matrix<T, 3, 1>& getGravityAxis() const { return eg_; }
     const Eigen::Matrix<T, 3, 1>& getXHorizontal() const { return xHorizontal_; }
     const Eigen::Matrix<T, 3, 1>& getYHorizontal() const { return yHorizontal_; }
     const T& getHeadingAngle() const { return headingAngle_; }
-
   
   protected:
     void updateDependantVariables()
@@ -150,5 +157,4 @@ class NoisyState : public State<T> {
   protected:
     RandomNumberGenerator<T>& rn_;
     Eigen::Matrix<T, 3, 1> eg_bias_; 
-
 }; // end of class NoisyState

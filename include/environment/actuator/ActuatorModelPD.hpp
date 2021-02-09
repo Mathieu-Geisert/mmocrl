@@ -46,6 +46,7 @@ class ActuatorModelPD : public ActuatorModelBase<T> {
     virtual void advance() 
     {
       Eigen::Matrix<T, -1, 1> pTarget(this->nDOF_+1), vTarget(this->nDOF_), gForce(this->nDOF_);
+      pTarget.setZero(); vTarget.setZero();
       pTarget.tail(this->nJoint_) = this->targetJointPosition_;
       vTarget.tail(this->nJoint_) = this->targetJointVelocity_;
       this->anymal_->setPdTarget(pTarget.template cast<double>(), vTarget.template cast<double>());

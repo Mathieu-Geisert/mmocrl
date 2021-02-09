@@ -1,7 +1,7 @@
 /*
  * =====================================================================================
  *
- *       Filename:  TerrainGenerator.hpp
+ *       Filename:  Terrain.hpp
  *
  *    Description:  Class to handle generation of the terrains.
  *                  Code based from RSL published sources of 
@@ -25,8 +25,8 @@
 #include "environment/motion/ModelParametersBase.hpp"
 
 //TODO: adjust matrix template???
-
-namespace terrain {
+//TODO: clean namespace.
+//TODO: check seed
 
 enum TerrainType {
   Flat,
@@ -40,14 +40,14 @@ enum TerrainType {
 
 constexpr const double PixelSize = 0.02;
 
-template<typename T, int Nlimb> 
-class TerrainGenerator {
+template<typename T, int Nlimb>
+class Terrain {
  
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   public:
-    TerrainGenerator(raisim::World* world, const ModelParametersBase<T, Nlimb>& modelParameters, double xSize=10., double ySize=10.)
-     : world_(world), terrainGenerator_(), footNames_(modelParameters.getFootNames())   
+    Terrain(raisim::World* world, const ModelParametersBase<T, Nlimb>& modelParameters, RandomNumberGenerator<T>& rn, double xSize=10., double ySize=10.)
+     : world_(world), terrainGenerator_(), footNames_(modelParameters.getFootNames()), rn_(rn)
     {
       terrainProp_.xSize = xSize;
       terrainProp_.ySize = ySize;
@@ -69,7 +69,7 @@ class TerrainGenerator {
       setFootFriction(0.9);
     }
 
-    ~TerrainGenerator() = default;
+    ~Terrain() = default;
 
   Eigen::Vector3d getTerrainNormal(double posX, double posY, double delta = 1.0) const
   {
@@ -387,8 +387,7 @@ class TerrainGenerator {
     std::vector<double> heights_;
     std::vector<std::string> footNames_;
     Eigen::Matrix<T, Nlimb, 1> footFriction_;
-    RandomNumberGenerator<float> rn_;
+    RandomNumberGenerator<T>& rn_;
     int seed_ = 0;
-}; // end of clann TerrainGenerator
-} // end of namespace terrain
+}; // end of clann Terrain
 

@@ -4,9 +4,11 @@
 
 #include <raisim/World.hpp>
 #include "raisim/RaisimServer.hpp"
-#include "environment/terrain/TerrainGenerator.hpp"
+#include "environment/terrain/Terrain.hpp"
 #include "environment/motion/ModelParametersAnymalC100.hpp"
+#include "common/RandomNumberGenerator.hpp"
 #include <chrono> 
+
 using namespace std::chrono; 
 
 int main(int argc, char *argv[]) {
@@ -15,8 +17,9 @@ int main(int argc, char *argv[]) {
   raisim::RaisimServer* server = new raisim::RaisimServer(world);
   server->launchServer();
 
+  RandomNumberGenerator<float> rn;
   ModelParametersAnymalC100<float> paramsC100;
-  terrain::TerrainGenerator terrainGenerator(world, paramsC100);
+  Terrain terrainGenerator(world, paramsC100, rn);
 
   Eigen::Matrix<double, 3, 1> params;
  
@@ -29,7 +32,7 @@ int main(int argc, char *argv[]) {
     }
     std::cout << params.transpose() << std::endl;
     auto start = high_resolution_clock::now();
-    terrainGenerator.generateTerrain(terrain::TerrainType(rand()%7), params); 
+    terrainGenerator.generateTerrain(TerrainType(rand()%7), params); 
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(stop - start); 
     std::cout << "terrainGeneration duration (ms): " << duration.count() << std::endl;

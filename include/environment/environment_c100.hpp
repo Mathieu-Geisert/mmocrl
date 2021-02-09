@@ -974,14 +974,14 @@ class blind_locomotion {
       terrainProp_.frequency = 0.1 + params[1]; ///
 
       if (seed_ == -1) {
-        terrainGenerator_.setSeed(rn_.intRand(0, 100));
+        Terrain_.setSeed(rn_.intRand(0, 100));
       } else {
-        terrainGenerator_.setSeed(seed_);
+        Terrain_.setSeed(seed_);
       }
 
-      terrainGenerator_.getTerrainProp() = terrainProp_;
+      Terrain_.getTerrainProp() = terrainProp_;
 
-      heights_ = terrainGenerator_.generatePerlinFractalTerrain();
+      heights_ = Terrain_.generatePerlinFractalTerrain();
       for (size_t i = 0; i < heights_.size(); i++) {
         heights_[i] += 1.0;
       }
@@ -1022,14 +1022,14 @@ class blind_locomotion {
       terrainProp_.frequency = 0.2 + params[2]; ///
 
       if (seed_ == -1) {
-        terrainGenerator_.setSeed(rn_.intRand(0, 100));
+        Terrain_.setSeed(rn_.intRand(0, 100));
       } else {
-        terrainGenerator_.setSeed(seed_);
+        Terrain_.setSeed(seed_);
       }
 
-      terrainGenerator_.getTerrainProp() = terrainProp_;
+      Terrain_.getTerrainProp() = terrainProp_;
 
-      heights_ = terrainGenerator_.generatePerlinFractalTerrain();
+      heights_ = Terrain_.generatePerlinFractalTerrain();
 
       for (size_t i = 0; i < heights_.size(); i++) {
         heights_[i] += 1.0;
@@ -1707,7 +1707,7 @@ class blind_locomotion {
   std::vector<double> heights_;
   raisim::HeightMap *terrain_;
   raisim::TerrainProperties terrainProp_;
-  raisim::TerrainGenerator terrainGenerator_;
+  raisim::Terrain Terrain_;
   Eigen::Matrix<double, 3, 1> terrainparams_;
   int taskIndex_ = 0;
   TerrainType terrainType_ = TerrainType::Flat_;

@@ -50,16 +50,16 @@ class JointHistory {
       jointHist_.setZero();
     }
     
-    int getNJoint() { return nJoint; }
-    int getHistoryLength() { return jointHistoryLength; }
+    int getNJoint() const { return nJoint; } 
+    int getHistoryLength() const { return jointHistoryLength; }
     
-    T getLastJointValue(int actId, int iter)
+    T getLastJointValue(int actId, int iter) const 
     {
       FATAL_IF(actId<0 || actId>nJoint-1, "[JointHistory::getLastJointPosition] wrong actuator Id...");
       return jointHist_(actId + getPositionInBuffer(iter));
     }
     
-    Eigen::Matrix<T, nJoint, 1> getLastJointValue(const int& iter = 1)
+    Eigen::Matrix<T, nJoint, 1> getLastJointValue(int iter = 1) const
     {
       //std::cout << "currentBufferPosition: " << currentBufferPosition_  << " -- iter: " << iter << " -- getPositionInBuffer: " << getPositionInBuffer(iter) << std::endl;
       return jointHist_.segment(getPositionInBuffer(iter), nJoint);
@@ -78,7 +78,7 @@ class JointHistory {
 
   protected:
 
-    inline int getPositionInBuffer(const int& pastIter) 
+    inline int getPositionInBuffer(int pastIter) const
     {
       FATAL_IF(pastIter<1 || pastIter>jointHistoryLength-1, "[JointHistory::getLastJointVelocity] iteration should be greater 1 and smaller than the history length.");
       int delta = currentBufferPosition_ - pastIter;
@@ -100,7 +100,7 @@ class JointVelPosErrorHistory {
   
   public:
     JointVelPosErrorHistory(raisim::ArticulatedSystem* anymal)
-     : anymal_(anymal), jointVelHist_(), jointPosErrorHist_()
+     : anymal_(anymal), jointVelHist_(), jointPosErrorHist_(), jointPosTargetHist_()
     {
       reset();
     }
@@ -109,47 +109,63 @@ class JointVelPosErrorHistory {
 
     void reset()
     {
+      //if (isnan(anymal_->getGeneralizedVelocity().e().norm())) {
+      //  std::cout << "history: velocity is nan" << std::endl; 
+      //}
+      //if (isnan(anymal_->getGeneralizedCoordinate().e().norm())) {
+      //  std::cout << "history: coordinate is nan" << std::endl; 
+      //}
       jointVelHist_.reset(anymal_->getGeneralizedVelocity().e().template cast<T>());
       jointPosErrorHist_.reset();
       jointPosTargetHist_.reset(anymal_->getGeneralizedCoordinate().e().template cast<T>());
     }
 
-    int getNJoint() { return nJoint; }
-    int getHistoryLength() { return jointHistoryLength; }
+    int getNJoint() const { return nJoint; }
+    int getHistoryLength() const { return jointHistoryLength; }
 
-    void appendCurrentState(const Eigen::Matrix<T, -1, 1> targetJointPosition)
+    void appendCurrentState(const Eigen::Matrix<T, -1, 1>& targetJointPosition)
     {
+      //if (isnan(anymal_->getGeneralizedVelocity().e().norm())) {
+      //  std::cout << "history: velocity is nan" << std::endl; 
+      //}
+      //if (isnan(anymal_->getGeneralizedCoordinate().e().norm())) {
+      //  std::cout << "history: coordinate is nan" << std::endl; 
+      //}
+      //if (isnan(targetJointPosition.norm())) {
+      //  std::cout << "history: target is nan" << std::endl; 
+      //}
       jointVelHist_.appendValue(anymal_->getGeneralizedVelocity().e().template cast<T>());
       jointPosErrorHist_.appendValue(targetJointPosition.tail(nJoint) - anymal_->getGeneralizedCoordinate().e().template cast<T>().tail(nJoint));
+      jointPosTargetHist_.appendValue(targetJointPosition);
     }
 
-    Eigen::Matrix<T, nJoint, 1> getLastJointPositionError(int iter = 1)
+    Eigen::Matrix<T, nJoint, 1> getLastJointPositionError(int iter = 1) const
     {
       return jointPosErrorHist_.getLastJointValue(iter);
     }
 
-    T getLastJointPositionError(int actId, int iter)
+    T getLastJointPositionError(int actId, int iter) const
     {
       return jointPosErrorHist_.getLastJointValue(actId, iter);
  
     }
 
-    Eigen::Matrix<T, nJoint, 1> getLastJointVelocity(int iter = 1)
+    Eigen::Matrix<T, nJoint, 1> getLastJointVelocity(int iter = 1) const
     {
       return jointVelHist_.getLastJointValue(iter);
     }
 
-    T getLastJointVelocity(int actId, int iter)
+    T getLastJointVelocity(int actId, int iter) const
     {
       return jointVelHist_.getLastJointValue(actId, iter);
     }
 
-    Eigen::Matrix<T, nJoint, 1> getLastJointPositionTarget(int iter = 1)
+    Eigen::Matrix<T, nJoint, 1> getLastJointPositionTarget(int iter = 1) const 
     {
       return jointPosTargetHist_.getLastJointValue(iter);
     }
 
-    T getLastJointPositionTarget(int actId, int iter)
+    T getLastJointPositionTarget(int actId, int iter) const
     {
       return jointPosTargetHist_.getLastJointValue(actId, iter);
     }
