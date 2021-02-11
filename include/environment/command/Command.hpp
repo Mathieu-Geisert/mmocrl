@@ -59,7 +59,7 @@ public:
       T x_dist = goalPosition_[0] - bodyPos[0];
       T y_dist = goalPosition_[1] - bodyPos[1];
       if (std::sqrt(x_dist * x_dist + y_dist * y_dist) < 0.5) {
-        sampleCommand();
+        sampleGoal();
       }
       T commandDirection = std::atan2(y_dist, x_dist);
       const T& headingAngle = state_.getHeadingAngle();
@@ -130,13 +130,13 @@ public:
     command_[1] = std::sin(commandDirection_bodyframe);
     command_[2] = 0.0;
 
-    if (commandMode_ != CommandMode::STRAIGHT) {
-      command_[2] = 1.0 - 2.0 * rn_.intRand(0, 1);
-      command_[2] *= rn_.sampleUniform01();
-      if ((commandMode_ != CommandMode::NOZERO) && (rn_.sampleUniform01() > 0.8)) {
-        command_.head(2).setZero();
-      }
-    }
+//    if (commandMode_ != CommandMode::STRAIGHT) {
+//      command_[2] = 1.0 - 2.0 * rn_.intRand(0, 1);
+//      command_[2] *= rn_.sampleUniform01();
+//      if ((commandMode_ != CommandMode::NOZERO) && (rn_.sampleUniform01() > 0.8)) {
+//        command_.head(2).setZero();
+//      }
+//    }
 
 //    if (terrainType_ == TerrainType::Stairs) {
 //      if (rn_.sampleUniform01() < 0.5) {
