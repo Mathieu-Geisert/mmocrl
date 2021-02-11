@@ -59,7 +59,7 @@ public:
       privilegedObservation.segment(idx, nPointTerrain) = footPosWrtTerrain.row(i);
       //Scaling, Offset and bounds
       for (int j=idx; j<idx+nPointTerrain; j++) {
-        privilegedObservation[j] = std::max(std::min(privilegedObservation[j], 0.25), -0.25);
+        privilegedObservation[j] = std::max(std::min(float(privilegedObservation[j]), 0.25f), -0.25f);
         privilegedObservation[j] -= 0.05;
         privilegedObservation[j] *= 10.0;
       }
@@ -78,9 +78,9 @@ public:
       privilegedObservation.template segment<3>(idx) = netFootContacts[i];
       //Scaling, Offset and bounds
       privilegedObservation[idx + 2] -= 80.0;
-      privilegedObservation[idx] = std::max(std::min(privilegedObservation[idx], 50.0), -50.0);
-      privilegedObservation[idx + 1] = std::max(std::min(privilegedObservation[idx+1], 50.0), -50.0);
-      privilegedObservation[idx + 2] = std::max(std::min(privilegedObservation[idx+2], 100.0), -100.0);
+      privilegedObservation[idx] = std::max(std::min(float(privilegedObservation[idx]), 50.0f), -50.0f);
+      privilegedObservation[idx + 1] = std::max(std::min(float(privilegedObservation[idx+1]), 50.0f), -50.0f);
+      privilegedObservation[idx + 2] = std::max(std::min(float(privilegedObservation[idx+2]), 100.0f), -100.0f);
       privilegedObservation[idx] *= 0.01;
       privilegedObservation[idx + 1] *= 0.01;
       privilegedObservation[idx + 2] *= 0.02;
