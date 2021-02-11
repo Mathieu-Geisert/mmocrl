@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import datetime
 import argparse
+import subprocess
 
 print("Hello")
 
@@ -125,6 +126,7 @@ for update in range(1000000):
         loaded_graph = torch.jit.load(saver.data_dir+"/policy_"+str(update)+'.pt')
 
         env.turn_on_visualization()
+        p = subprocess.Popen(["/home/mgeisert/raisim_ws/src/raisim/raisimUnity/linux/raisimUnity.x86_64"])
         env.start_video_recording(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "policy_"+str(update)+'.mp4')
 
         for step in range(n_steps*2):
@@ -135,6 +137,7 @@ for update in range(1000000):
 
         env.stop_video_recording()
         env.turn_off_visualization()
+        p.terminate()
 
         env.reset()
         # model.save(saver.data_dir+"/policies/policy", update)
