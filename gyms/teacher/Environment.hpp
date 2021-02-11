@@ -38,21 +38,21 @@ class ENVIRONMENT : public RaisimGymEnv {
     anymal_->setName("anymal");
     world_->setTimeStep(0.0025);
 
-    rn_ = std::make_shared<RandomNumberGenerator<float>>();
-    disturbance_ = std::make_shared<PushDisturbance<float>>(anymal_, *rn_);
-    c100Params_ = std::make_shared<ModelParametersAnymalC100<float>>();
-    robotState_ = std::make_shared<State<float>>(anymal_);
-    terrain_ = std::make_shared<Terrain<float, 4>>(world_.get(), *c100Params_, *rn_);
-    command_ = std::make_shared<Command<float>>(*robotState_, *rn_);
-    contact_ = std::make_shared<ContactManager<float, 4>>(anymal_, *robotState_, *terrain_, simulation_dt_);
-    IK_ = std::make_shared<InverseKinematics<float, 4>>(*c100Params_);
+    rn_ = std::make_shared<RandomNumberGenerator<double>>();
+    disturbance_ = std::make_shared<PushDisturbance<double>>(anymal_, *rn_);
+    c100Params_ = std::make_shared<ModelParametersAnymalC100<double>>();
+    robotState_ = std::make_shared<State<double>>(anymal_);
+    terrain_ = std::make_shared<Terrain<double, 4>>(world_.get(), *c100Params_, *rn_);
+    command_ = std::make_shared<Command<double>>(*robotState_, *rn_);
+    contact_ = std::make_shared<ContactManager<double, 4>>(anymal_, *robotState_, *terrain_, simulation_dt_);
+    IK_ = std::make_shared<InverseKinematics<double, 4>>(*c100Params_);
     std::string actuator_network_path = "/home/mgeisert/git/mmocrl/rsc/actuator/C100/seaModel_2500.txt";
-    actuator_ = std::make_shared<ActuatorModelPNetwork<float>>(anymal_, actuator_network_path);
-    footMotion_ = std::make_shared<FootMotionGenerator<float, 4>>(*c100Params_, *robotState_, 1.3, 0.2, control_dt_);
-    privilegedObservation_ = std::make_shared<PrivilegedObservation<float, 4>>(*contact_, *terrain_, *robotState_, *disturbance_);
-    stateObservation_ = std::make_shared<InternalObservation<float, 4>>(*robotState_, *command_, *footMotion_, *actuator_);
-    stateScaling_ = std::make_shared<ScalingAndOffset<float>>("/home/mgeisert/git/mmocrl/rsc/scaling/state.yaml");
-    actionScaling_ = std::make_shared<ScalingAndOffset<float>>("/home/mgeisert/git/mmocrl/rsc/scaling/action.yaml");
+    actuator_ = std::make_shared<ActuatorModelPNetwork<double>>(anymal_, actuator_network_path);
+    footMotion_ = std::make_shared<FootMotionGenerator<double, 4>>(*c100Params_, *robotState_, 1.3, 0.2, control_dt_);
+    privilegedObservation_ = std::make_shared<PrivilegedObservation<double, 4>>(*contact_, *terrain_, *robotState_, *disturbance_);
+    stateObservation_ = std::make_shared<InternalObservation<double, 4>>(*robotState_, *command_, *footMotion_, *actuator_);
+    stateScaling_ = std::make_shared<ScalingAndOffset<double>>("/home/mgeisert/git/mmocrl/rsc/scaling/state.yaml");
+    actionScaling_ = std::make_shared<ScalingAndOffset<double>>("/home/mgeisert/git/mmocrl/rsc/scaling/action.yaml");
 
     /// this is nominal configuration of anymal
     gc_init_ << 0, 0, 0.50, 1.0, 0.0, 0.0, 0.0, 0.03, 0.4, -0.8, -0.03, 0.4, -0.8, 0.03, -0.4, 0.8, -0.03, -0.4, 0.8;
@@ -68,16 +68,16 @@ class ENVIRONMENT : public RaisimGymEnv {
     /// visualize if it is the first environment
     if (visualizable_) {
       server_ = std::make_unique<raisim::RaisimServer>(world_.get());
-      commandViewer_ = std::make_shared<CommandViewer<float, 4>>(server_.get(), *robotState_, *command_, *terrain_);
-      terrainViewer_ = std::make_shared<LocalTerrainViewer<float, 4>>(server_.get(), anymal_, *contact_);
+      commandViewer_ = std::make_shared<CommandViewer<double, 4>>(server_.get(), *robotState_, *command_, *terrain_);
+      terrainViewer_ = std::make_shared<LocalTerrainViewer<double, 4>>(server_.get(), anymal_, *contact_);
       server_->launchServer();
       server_->focusOn(anymal_);
     }
 
     command_->sampleGoal();
     robotState_->advance();
-    Eigen::Matrix<float, 12, 1> foot_target;
-    Eigen::Matrix<float, 4, 1> deltaFreq; deltaFreq.setZero();
+    Eigen::Matrix<double, 12, 1> foot_target;
+    Eigen::Matrix<double, 4, 1> deltaFreq; deltaFreq.setZero();
     foot_target = footMotion_->advance(deltaFreq);
     foot_target_hist2_ = foot_target;
     foot_target_hist1_ = foot_target;
@@ -93,8 +93,8 @@ class ENVIRONMENT : public RaisimGymEnv {
     robotState_->advance();
     contact_->advance();
 
-    Eigen::Matrix<float, 12, 1> foot_target;
-    Eigen::Matrix<float, 4, 1> deltaFreq; deltaFreq.setZero();
+    Eigen::Matrix<double, 12, 1> foot_target;
+    Eigen::Matrix<double, 4, 1> deltaFreq; deltaFreq.setZero();
     foot_target = footMotion_->advance(deltaFreq);
     foot_target_hist2_ = foot_target;
     foot_target_hist1_ = foot_target;
@@ -106,11 +106,11 @@ class ENVIRONMENT : public RaisimGymEnv {
       std::cout << "action badly conditioned: " << action.transpose() << std::endl;
       badlyConditioned_ = true;
     }
-    Eigen::Matrix<float, 12, 1> gc_target, foot_target;
-    Eigen::Matrix<float, 16, 1> actionScaled; actionScaled.setZero();
-    Eigen::Matrix<float, 3, 1> sol;
+    Eigen::Matrix<double, 12, 1> gc_target, foot_target;
+    Eigen::Matrix<double, 16, 1> actionScaled; actionScaled.setZero();
+    Eigen::Matrix<double, 3, 1> sol;
 
-    actionScaled = actionScaling_->apply(action.template cast<float>());
+    actionScaled = actionScaling_->apply(action.template cast<double>());
     command_->updateCommand();
     //std::cout << "command: " << command_->getCommand().transpose() << std::endl;
     foot_target = footMotion_->advance(actionScaled.head(4));
@@ -142,7 +142,7 @@ class ENVIRONMENT : public RaisimGymEnv {
 
 
     //Reward
-    Eigen::Vector2f vel = robotState_->getBaseVelInBaseFrame().head(2);
+    Eigen::Vector2d vel = robotState_->getBaseVelInBaseFrame().head(2);
     double v_pr = vel.transpose() * command_->getCommand().head(2);
     double r_lv = 1.0;
     if (v_pr < 0.6)
@@ -169,7 +169,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     double v_0 = 0.;//exp( -1.5 * pow( (vel - v_pr*command_->getCommand().head(2)).norm(),2));
     rewards_.record("r_b", v_0 + w);
 
-    Eigen::Matrix<float, 12, 1> smoothing = foot_target - 2* foot_target_hist1_ + foot_target_hist2_;
+    Eigen::Matrix<double, 12, 1> smoothing = foot_target - 2* foot_target_hist1_ + foot_target_hist2_;
     rewards_.record("r_s", - smoothing.norm());
     foot_target_hist2_ = foot_target_hist1_;
     foot_target_hist1_ = foot_target;
@@ -180,10 +180,10 @@ class ENVIRONMENT : public RaisimGymEnv {
   }
 
   void observe(Eigen::Ref<EigenVec> ob) final {
-    Eigen::Matrix<float, -1, 1> state = stateObservation_->getObservation();
+    Eigen::Matrix<double, -1, 1> state = stateObservation_->getObservation();
     state = stateScaling_->apply(state);
-    ob.head(state.size()) = state;
-    ob.segment(state.size(), 79) = privilegedObservation_->getObservation();
+    ob.head(state.size()) = state.template cast<float>();
+    ob.segment(state.size(), 79) = privilegedObservation_->getObservation().template cast<float>();
     if (isnan(ob.norm()) || isinf(ob.norm())) {
       if (badlyConditioned_ == false) {
         std::cout << "observation badly conditioned even when action was good: " << ob.transpose() << std::endl;
@@ -211,27 +211,27 @@ class ENVIRONMENT : public RaisimGymEnv {
   void turnOnVisualization() { server_->wakeup(); visualize_ = true;}
 
  private:
-  std::shared_ptr<RandomNumberGenerator<float>> rn_;
-  std::shared_ptr<PushDisturbance<float>> disturbance_;
-  std::shared_ptr<ModelParametersAnymalC100<float>> c100Params_;
-  std::shared_ptr<State<float>> robotState_;
-  std::shared_ptr<Terrain<float, 4>> terrain_;
-  std::shared_ptr<Command<float>> command_;
-  std::shared_ptr<CommandViewer<float, 4>> commandViewer_;
-  std::shared_ptr<ContactManager<float, 4>> contact_;
-  std::shared_ptr<InverseKinematics<float, 4>> IK_;
-  std::shared_ptr<ActuatorModelPNetwork<float>> actuator_;
-  std::shared_ptr<FootMotionGenerator<float, 4>> footMotion_;
-  std::shared_ptr<PrivilegedObservation<float, 4>> privilegedObservation_;
-  std::shared_ptr<InternalObservation<float, 4>> stateObservation_;
-  std::shared_ptr<ScalingAndOffset<float>> stateScaling_;
-  std::shared_ptr<ScalingAndOffset<float>> actionScaling_;
-  std::shared_ptr<LocalTerrainViewer<float, 4>> terrainViewer_;
+  std::shared_ptr<RandomNumberGenerator<double>> rn_;
+  std::shared_ptr<PushDisturbance<double>> disturbance_;
+  std::shared_ptr<ModelParametersAnymalC100<double>> c100Params_;
+  std::shared_ptr<State<double>> robotState_;
+  std::shared_ptr<Terrain<double, 4>> terrain_;
+  std::shared_ptr<Command<double>> command_;
+  std::shared_ptr<CommandViewer<double, 4>> commandViewer_;
+  std::shared_ptr<ContactManager<double, 4>> contact_;
+  std::shared_ptr<InverseKinematics<double, 4>> IK_;
+  std::shared_ptr<ActuatorModelPNetwork<double>> actuator_;
+  std::shared_ptr<FootMotionGenerator<double, 4>> footMotion_;
+  std::shared_ptr<PrivilegedObservation<double, 4>> privilegedObservation_;
+  std::shared_ptr<InternalObservation<double, 4>> stateObservation_;
+  std::shared_ptr<ScalingAndOffset<double>> stateScaling_;
+  std::shared_ptr<ScalingAndOffset<double>> actionScaling_;
+  std::shared_ptr<LocalTerrainViewer<double, 4>> terrainViewer_;
 
   Eigen::Matrix<double, 19, 1> gc_init_;
   Eigen::Matrix<double, 18, 1> gv_init_;
-  Eigen::Matrix<float, 12, 1> foot_target_hist1_;
-  Eigen::Matrix<float, 12, 1> foot_target_hist2_;
+  Eigen::Matrix<double, 12, 1> foot_target_hist1_;
+  Eigen::Matrix<double, 12, 1> foot_target_hist2_;
   bool visualizable_ = false;
   raisim::ArticulatedSystem* anymal_;
   double terminalRewardCoeff_ = -10.;
