@@ -37,7 +37,7 @@ public:
 
   void advance()
   {
-    const Eigen::Matrix<float, 6, -1>& dfoot = contact_.getFootHeightWrtLocalTerrain();
+    const Eigen::Matrix<T, 6, -1>& dfoot = contact_.getFootHeightWrtLocalTerrain();
     if (dfoot.cols() > terrainVisual_.size())
         resize(dfoot.cols());
     raisim::Vec<3> footPosW;
