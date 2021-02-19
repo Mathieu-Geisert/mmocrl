@@ -3,8 +3,10 @@ MultiModal Optimal Control and Reinforcement Learning
 
 #TODO
 
-Setup environment: Add History for student NN, add interface to easily add noise on the observation or other, better organize noise on gravity axis.
+Check noise for teacher policy?
 
-Setup Terrain: terrains description (RSL/SIdd), Implement terrain difficulty particule filter.
+Setup environment: add interface to easily add noise on the observation or other, better organize noise on gravity axis.
+
+Setup Terrain: terrains description (RSL/SIdd), Implement terrain difficulty particule filter. Setup terrain filter in python? c++? add interface to set terrain from python?
 
 Setup tuning tool: setup interface for W&B.

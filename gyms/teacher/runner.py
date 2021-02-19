@@ -51,7 +51,7 @@ actor = ppo_module.Actor(ppo_module.MLP(cfg['architecture']['policy_net'],
                                         nn.LeakyReLU,
                                         ob_dim,
                                         act_dim),
-                         ppo_module.MultivariateGaussianDiagonalCovariance(act_dim, 0.2),
+                         ppo_module.MultivariateGaussianDiagonalCovariance(act_dim, 1.0),
                          device)
 
 critic = ppo_module.Critic(ppo_module.MLP(cfg['architecture']['value_net'],
@@ -70,8 +70,8 @@ if mode == 'retrain':
     mean_csv_path = weight_path.rsplit('/', 1)[0] + '/' + 'mean' + weight_path.rsplit('/', 1)[1].split('_', 1)[1] + '.csv'
     var_csv_path = weight_path.rsplit('/', 1)[0] + '/' + 'var' + weight_path.rsplit('/', 1)[1].split('_', 1)[1] + '.csv'
     saver = ConfigurationSaver(log_dir=home_path + "/data/roughTerrain",
-                               save_items=[task_path + "/cfg.yaml", task_path + "/Environment.hpp"],
-                               pretrained_items=[weight_path.rsplit('/', 1)[0].rsplit('/', 1)[1], [weight_path+'.pt', weight_path+'.txt', full_checkpoint_path, mean_csv_path, var_csv_path]])
+                               save_items=[task_path + "/cfg.yaml", task_path + "/Environment.hpp"])
+                               #pretrained_items=[weight_path.rsplit('/', 1)[0].rsplit('/', 1)[1], [weight_path+'.pt', weight_path+'.txt', full_checkpoint_path, mean_csv_path, var_csv_path]])
     ## load observation scaling from files of pre-trained model
     env.load_scaling(weight_path.rsplit('/', 1)[0], int(weight_path.rsplit('/', 1)[1].split('_', 1)[1]))
     print("Load observation scaling in", weight_path.rsplit('/', 1)[0]+":", "mean"+str(int(weight_path.rsplit('/', 1)[1].split('_', 1)[1])) + ".csv", "and", "var"+str(int(weight_path.rsplit('/', 1)[1].split('_', 1)[1])) + ".csv")
@@ -126,10 +126,10 @@ for update in range(1000000):
         loaded_graph = torch.jit.load(saver.data_dir+"/policy_"+str(update)+'.pt')
 
         env.turn_on_visualization()
-        p = subprocess.Popen(["/home/mgeisert/raisim_ws/src/raisim/raisimUnity/linux/raisimUnity.x86_64"])
+        #p = subprocess.Popen(["/home/mgeisert/raisim_ws/src/raisim/raisimUnity/linux/raisimUnity.x86_64"])
         env.start_video_recording(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "policy_"+str(update)+'.mp4')
 
-        for step in range(n_steps*2):
+        for step in range(n_steps*4):
             time.sleep(0.01)
             obs = env.observe(False)
             action_ll = loaded_graph(torch.from_numpy(obs).cpu())
@@ -137,7 +137,7 @@ for update in range(1000000):
 
         env.stop_video_recording()
         env.turn_off_visualization()
-        p.terminate()
+        #p.terminate()
 
         env.reset()
         # model.save(saver.data_dir+"/policies/policy", update)

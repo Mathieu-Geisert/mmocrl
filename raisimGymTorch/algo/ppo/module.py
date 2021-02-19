@@ -1,7 +1,7 @@
 import torch.nn as nn
 import numpy as np
 import torch
-from torch.distributions import MultivariateNormal, Normal
+from torch.distributions import Normal
 
 
 class Actor:
@@ -72,16 +72,16 @@ class MLP(nn.Module):
         self.activation_fn = actionvation_fn
 
         modules = [nn.Linear(input_size, shape[0]), self.activation_fn()]
-        scale = [0.]#np.sqrt(2)]
+        scale = [np.sqrt(2)]
 
         for idx in range(len(shape)-1):
             modules.append(nn.Linear(shape[idx], shape[idx+1]))
             modules.append(self.activation_fn())
-            scale.append(0.)#np.sqrt(2))
+            scale.append(np.sqrt(2))
 
         modules.append(nn.Linear(shape[-1], output_size))
         self.architecture = nn.Sequential(*modules)
-        scale.append(0.)#np.sqrt(2))
+        scale.append(np.sqrt(2))
         
         self.init_weights(self.architecture, scale)
         self.input_shape = [input_size]

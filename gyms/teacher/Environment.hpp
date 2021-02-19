@@ -142,38 +142,59 @@ class ENVIRONMENT : public RaisimGymEnv {
 
 
     //Reward
+    //desired base velocity direction
     Eigen::Vector2f vel = robotState_->getBaseVelInBaseFrame().head(2);
     double v_pr = vel.transpose() * command_->getCommand().head(2);
     double r_lv = 1.0;
     if (v_pr < 0.6)
       r_lv = exp(-2.0*pow(v_pr - 0.6, 2));
     rewards_.record("r_lv", r_lv);
-    if(visualize_) {
-      it_++;
-      if (it_ % 10 == 0) { 
-        std::cout << "AngVel[2]: " << robotState_->getBaseAngVel()[2] << " - BaseVelInBaseFrame: " << vel.transpose()
-          << " - command: " << command_->getCommand().transpose() << " - v_pr: " << v_pr << " - r_lv: " << r_lv << std::endl;
-      }
-    }
+//    if(visualize_) {
+//      it_++;
+//      if (it_ % 10 == 0) { 
+//        std::cout << "AngVel[2]: " << robotState_->getBaseAngVel()[2] << " - BaseVelInBaseFrame: " << vel.transpose()
+//          << " - command: " << command_->getCommand().transpose() << " - v_pr: " << v_pr << " - r_lv: " << r_lv << std::endl;
+//      }
+//    }
 
+    //Desired angular rotation yaw
     double w_pr = robotState_->getBaseAngVel()[2];
     w_pr -= command_->getCommand()[2];
     double r_av = 1.0;
     if (w_pr < 0.6)
       r_av = exp(-1.5*pow(w_pr, 2)); //- 0.6, 2));
-//    if (command_->getCommand()[2] == 0.)
-//    r_av = 0.0;
     rewards_.record("r_av", r_av);
 
+    //No pitch/roll and no ortogonal velocity w.r.t commanded direction.
     double w = exp( -1.5 * pow(robotState_->getBaseAngVel().head(2).norm(), 2));
-    double v_0 = 0.;//exp( -1.5 * pow( (vel - v_pr*command_->getCommand().head(2)).norm(),2));
+    double v_0 = exp( -1.5 * pow( (vel - v_pr*command_->getCommand().head(2)).norm(),2));
     rewards_.record("r_b", v_0 + w);
 
+    //Foot clearance.
+    int Iswing = 0;
+    int InotClear = 0;
+    auto phases = footMotion_->getPhases();
+    auto localTerrainWrtFoot = contact_->getFootHeightWrtLocalTerrain();
+    for (int i=0; i<4; i++) {
+      if (phases[i] > M_PI) {
+        Iswing++;
+        for (int j=0; j<localTerrainWrtFoot.rows(); j++) {
+          if (localTerrainWrtFoot(i,j) > -0.015) {
+            InotClear++;
+            break;
+          }
+        }
+      }
+    }
+    rewards_.record("r_fc", float(Iswing - InotClear)/float(Iswing));
+
+    //Smoothing
     Eigen::Matrix<float, 12, 1> smoothing = foot_target - 2* foot_target_hist1_ + foot_target_hist2_;
     rewards_.record("r_s", - smoothing.norm());
     foot_target_hist2_ = foot_target_hist1_;
     foot_target_hist1_ = foot_target;
     
+    //Torque
     rewards_.record("r_t", - anymal_->getGeneralizedForce().squaredNorm());
     
     return rewards_.sum();
