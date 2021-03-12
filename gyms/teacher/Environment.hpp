@@ -173,29 +173,44 @@ class ENVIRONMENT : public RaisimGymEnv {
     //Foot clearance.
     int Iswing = 0;
     int InotClear = 0;
-    auto phases = footMotion_->getPhases();
-    auto localTerrainWrtFoot = contact_->getFootHeightWrtLocalTerrain();
+    Eigen::Matrix<float, 4, 1> phases = footMotion_->getPhases();
+    Eigen::Matrix<float, 6, 9> footHeightWrtTerrain = contact_->getFootHeightWrtLocalTerrain();
     for (int i=0; i<4; i++) {
-      if (phases[i] > M_PI) {
+      if (phases[i] > 0.0) {
         Iswing++;
-        for (int j=0; j<localTerrainWrtFoot.rows(); j++) {
-          if (localTerrainWrtFoot(i,j) > -0.015) {
+        for (int j=0; j<footHeightWrtTerrain.rows(); j++) {
+          if (footHeightWrtTerrain(i,j) < 0.03) {
             InotClear++;
             break;
           }
         }
       }
     }
-    rewards_.record("r_fc", float(Iswing - InotClear)/float(Iswing));
+    float r_fc = 0.f;
+    if (Iswing>0) {
+      r_fc = float(Iswing - InotClear)/float(Iswing);
+    }
+    rewards_.record("r_fc", r_fc);
 
     //Smoothing
-    Eigen::Matrix<float, 12, 1> smoothing = foot_target - 2* foot_target_hist1_ + foot_target_hist2_;
+    Eigen::Matrix<float, 12, 1> smoothing = foot_target - 2* foot_target_hist1_ + foot_target_hist2_;//actionScaled.tail(12) - 2* foot_target_hist1_ + foot_target_hist2_;
     rewards_.record("r_s", - smoothing.norm());
     foot_target_hist2_ = foot_target_hist1_;
-    foot_target_hist1_ = foot_target;
+    foot_target_hist1_ = foot_target;//actionScaled.tail(12);
     
     //Torque
-    rewards_.record("r_t", - anymal_->getGeneralizedForce().squaredNorm());
+    rewards_.record("r_t", - anymal_->getGeneralizedForce().e().tail(12).squaredNorm());
+    if(visualize_) {
+      std::cout << "reward: " << rewards_.sum() 
+        << "- r_lv: " << r_lv 
+        << " - r_av: " << r_av 
+        << " - r_b: " << v_0 + w 
+        << " - r_fc: " << r_fc 
+        << " - r_s: " << -smoothing.norm()
+        << " - r_t: " << -anymal_->getGeneralizedForce().e().tail(12).squaredNorm()
+        << std::endl;
+      //usleep(100000);
+    }
     
     return rewards_.sum();
   }
@@ -255,7 +270,7 @@ class ENVIRONMENT : public RaisimGymEnv {
   Eigen::Matrix<float, 12, 1> foot_target_hist2_;
   bool visualizable_ = false;
   raisim::ArticulatedSystem* anymal_;
-  double terminalRewardCoeff_ = -10.;
+  double terminalRewardCoeff_ = -1.;
   raisim::Reward rewards_;
   bool badlyConditioned_ = false;
   int it_ = 0;
