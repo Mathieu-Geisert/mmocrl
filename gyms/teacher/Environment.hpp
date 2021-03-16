@@ -160,8 +160,8 @@ class ENVIRONMENT : public RaisimGymEnv {
     //Desired angular rotation yaw
     double w_pr = robotState_->getBaseAngVel()[2];
     w_pr -= command_->getCommand()[2];
-    double r_av = 1.0;
-    if (w_pr < 0.6)
+    double r_av = 0.0;
+    //if (w_pr < 0.6)
       r_av = exp(-1.5*pow(w_pr, 2)); //- 0.6, 2));
     rewards_.record("r_av", r_av);
 
