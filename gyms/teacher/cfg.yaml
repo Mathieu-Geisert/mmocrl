@@ -3,7 +3,6 @@ record_video: yes
 
 environment:
   render: True
-# just testing commenting
   num_envs: 100
   eval_every_n: 20
   num_threads: 24
@@ -20,10 +19,14 @@ environment:
     r_s:
       coeff: 0.025
     r_fc:
-      coeff: 0.01
+      coeff: 0.3
     r_t:
       coeff: 2e-5
 
 architecture:
-  policy_net: [128, 128]
-  value_net: [128, 128]
+  policy_net: [64, 64]
+  value_net: [64, 64]
+
+training:
+  n_batch: 4
+  n_epoch: 4

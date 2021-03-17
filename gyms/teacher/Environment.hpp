@@ -271,7 +271,7 @@ class ENVIRONMENT : public RaisimGymEnv {
   bool visualizable_ = false;
   raisim::ArticulatedSystem* anymal_;
   double terminalRewardCoeff_ = -1.;
-  raisim::Reward rewards_;
+  //raisim::Reward rewards_;
   bool badlyConditioned_ = false;
   int it_ = 0;
   bool visualize_ = false;
