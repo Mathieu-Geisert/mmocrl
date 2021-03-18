@@ -19,7 +19,7 @@ environment:
     r_s:
       coeff: 0.025
     r_fc:
-      coeff: 0.3
+      coeff: 0.01
     r_t:
       coeff: 2e-5
 

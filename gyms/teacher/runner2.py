@@ -9,8 +9,17 @@ from stable_baselines3.common.callbacks import BaseCallback
 from gyms.teacher.teacher import RaisimGymEnv
 from raisimGymTorch.stable_baselines3.RaisimSbGymVecEnv import RaisimSbGymVecEnv as VecEnv
 from raisimGymTorch.helper.raisim_gym_helper import ConfigurationSaver, load_param, tensorboard_launcher
+import argparse
 
 import wandb
+
+#os.environ["WANDB_MODE"] = "dryrun"
+
+# configuration
+parser = argparse.ArgumentParser()
+parser.add_argument('-w', '--weight', help='pre-trained weight path', type=str, default='')
+args = parser.parse_args()
+weight_path = args.weight
 
 task_path = os.path.dirname(os.path.realpath(__file__))
 rsc_path = task_path + "/../../rsc"
@@ -77,9 +86,15 @@ model = PPO(MlpPolicy, env,
             batch_size=int(n_steps*env.num_envs/cfg['training']['n_batch']),
             n_epochs=cfg['training']['n_epoch'], policy_kwargs=policy_kwargs, tensorboard_log=saver.data_dir)
 
+if weight_path != '':
+    print("Loading parameters from: ", weight_path)
+    model = model.load(weight_path, env)
+
 saver_callback = SaverCallback(env, model, saver.data_dir)
 #wandb.watch(model)
 update = 0
+
+
 model.learn(total_timesteps=50000000, callback=saver_callback)
 
 #  model.learn(total_timesteps=1000000)

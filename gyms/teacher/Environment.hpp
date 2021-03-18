@@ -36,7 +36,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     /// add objects
     anymal_ = world_->addArticulatedSystem(resourceDir_+"/robot/c100/urdf/anymal_minimal.urdf");
     anymal_->setName("anymal");
-    world_->setTimeStep(0.0025);
+    world_->setTimeStep(simulation_dt_);//0.0025);
 
     rn_ = std::make_shared<RandomNumberGenerator<float>>();
     disturbance_ = std::make_shared<PushDisturbance<float>>(anymal_, *rn_);
@@ -46,13 +46,13 @@ class ENVIRONMENT : public RaisimGymEnv {
     command_ = std::make_shared<Command<float>>(*robotState_, *rn_);
     contact_ = std::make_shared<ContactManager<float, 4>>(anymal_, *robotState_, *terrain_, simulation_dt_);
     IK_ = std::make_shared<InverseKinematics<float, 4>>(*c100Params_);
-    std::string actuator_network_path = "/home/mgeisert/git/mmocrl/rsc/actuator/C100/seaModel_2500.txt";
+    std::string actuator_network_path = resourceDir_+"/actuator/C100/seaModel_2500.txt";
     actuator_ = std::make_shared<ActuatorModelPNetwork<float>>(anymal_, actuator_network_path);
     footMotion_ = std::make_shared<FootMotionGenerator<float, 4>>(*c100Params_, *robotState_, 1.3, 0.2, control_dt_);
     privilegedObservation_ = std::make_shared<PrivilegedObservation<float, 4>>(*contact_, *terrain_, *robotState_, *disturbance_);
     stateObservation_ = std::make_shared<InternalObservation<float, 4>>(*robotState_, *command_, *footMotion_, *actuator_);
-    stateScaling_ = std::make_shared<ScalingAndOffset<float>>("/home/mgeisert/git/mmocrl/rsc/scaling/state.yaml");
-    actionScaling_ = std::make_shared<ScalingAndOffset<float>>("/home/mgeisert/git/mmocrl/rsc/scaling/action.yaml");
+    stateScaling_ = std::make_shared<ScalingAndOffset<float>>(resourceDir_+"/scaling/state.yaml");
+    actionScaling_ = std::make_shared<ScalingAndOffset<float>>(resourceDir_+"/scaling/action.yaml");
 
     /// this is nominal configuration of anymal
     gc_init_ << 0, 0, 0.50, 1.0, 0.0, 0.0, 0.0, 0.03, 0.4, -0.8, -0.03, 0.4, -0.8, 0.03, -0.4, 0.8, -0.03, -0.4, 0.8;
@@ -106,21 +106,15 @@ class ENVIRONMENT : public RaisimGymEnv {
       std::cout << "action badly conditioned: " << action.transpose() << std::endl;
       badlyConditioned_ = true;
     }
+    
     Eigen::Matrix<float, 12, 1> gc_target, foot_target;
     Eigen::Matrix<float, 16, 1> actionScaled; actionScaled.setZero();
-    Eigen::Matrix<float, 3, 1> sol;
 
     actionScaled = actionScaling_->apply(action.template cast<float>());
     command_->updateCommand();
-    //std::cout << "command: " << command_->getCommand().transpose() << std::endl;
     foot_target = footMotion_->advance(actionScaled.head(4));
     foot_target += actionScaled.tail(12);
-    for (int j = 0; j < 4; j++) {
-      IK_->IKSagittal(sol, foot_target.segment(3 * j, 3), j);
-      gc_target.segment(3 * j, 3) = sol;
-    }
     gc_target = IK_->IKSagittal(foot_target);
-
     actuator_->setTargetJointPosition(gc_target);
 
     if(visualize_) server_->lockVisualizationServerMutex();
@@ -134,10 +128,6 @@ class ENVIRONMENT : public RaisimGymEnv {
       commandViewer_->advance();
       terrainViewer_->advance();
       server_->unlockVisualizationServerMutex();
-//      it_++;
-//      if (it_ % 10 == 0) { 
-//        std::cout << "AngVel: " << robotState_->getBaseAngVel().transpose() << std::endl;
-//      }
     }
 
 
@@ -167,7 +157,9 @@ class ENVIRONMENT : public RaisimGymEnv {
 
     //No pitch/roll and no ortogonal velocity w.r.t commanded direction.
     double w = exp( -1.5 * pow(robotState_->getBaseAngVel().head(2).norm(), 2));
-    double v_0 = exp( -1.5 * pow( (vel - v_pr*command_->getCommand().head(2)).norm(),2));
+    Eigen::Vector3f vel3 = v_pr*command_->getCommand(); 
+    vel3[2] = 0.; //set z vel to 0.
+    double v_0 = exp( -1.5 * pow( (robotState_->getBaseVelInBaseFrame() - vel3).norm(),2));
     rewards_.record("r_b", v_0 + w);
 
     //Foot clearance.
@@ -186,17 +178,17 @@ class ENVIRONMENT : public RaisimGymEnv {
         }
       }
     }
-    float r_fc = 0.f;
+    float r_fc = 0.5f;
     if (Iswing>0) {
       r_fc = float(Iswing - InotClear)/float(Iswing);
     }
     rewards_.record("r_fc", r_fc);
 
     //Smoothing
-    Eigen::Matrix<float, 12, 1> smoothing = foot_target - 2* foot_target_hist1_ + foot_target_hist2_;//actionScaled.tail(12) - 2* foot_target_hist1_ + foot_target_hist2_;
+    Eigen::Matrix<float, 12, 1> smoothing = actionScaled.tail(12) - 2* foot_target_hist1_ + foot_target_hist2_;//foot_target - 2* foot_target_hist1_ + foot_target_hist2_;
     rewards_.record("r_s", - smoothing.norm());
     foot_target_hist2_ = foot_target_hist1_;
-    foot_target_hist1_ = foot_target;//actionScaled.tail(12);
+    foot_target_hist1_ = actionScaled.tail(12);//foot_target;
     
     //Torque
     rewards_.record("r_t", - anymal_->getGeneralizedForce().e().tail(12).squaredNorm());
