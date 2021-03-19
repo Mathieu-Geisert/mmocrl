@@ -1,3 +1,4 @@
+#!/usr/bin/env/python3
 import gym
 import os
 import datetime
@@ -16,10 +17,11 @@ import wandb
 #os.environ["WANDB_MODE"] = "dryrun"
 
 # configuration
-parser = argparse.ArgumentParser()
-parser.add_argument('-w', '--weight', help='pre-trained weight path', type=str, default='')
-args = parser.parse_args()
-weight_path = args.weight
+#parser = argparse.ArgumentParser()
+#parser.add_argument('-w', '--weight', help='pre-trained weight path', type=str, default='')
+#args = parser.parse_args()
+#weight_path = args.weight
+weight_path=''
 
 task_path = os.path.dirname(os.path.realpath(__file__))
 rsc_path = task_path + "/../../rsc"
@@ -32,10 +34,25 @@ saver = ConfigurationSaver(log_dir=home_path + "/data/teacherFlat",
 # config
 cfg = YAML().load(open(task_path + "/cfg.yaml", 'r'))
 
-wandb.init(project='mmocrl_flat_teacher', entity='mgeisert', sync_tensorboard=True, config=cfg)
+#wandb.init(project='mmocrl_flat_teacher', entity='mgeisert', sync_tensorboard=True, config=cfg)
+wandb.init(project='mmocrl_desktop_test_fps', entity='mgeisert', sync_tensorboard=True, config=cfg)
+
+#make nested values
+#if wandb.config['num_envs']:
+#    print("num_envs set from wandb: ", wandb.config['num_envs'])
+#    wandb.config['environment']['num_envs'] = wandb.config['num_envs']
+#if wandb.config['num_threads']:
+#    print("num_threads set from wandb: ", wandb.config['num_threads'])
+#    wandb.config['environment']['num_threads'] = wandb.config['num_threads']
+#if wandb.config['n_batch']:
+#    print("n_batch set from wandb: ", wandb.config['n_batch'])
+#    wandb.config['training']['n_batch'] = wandb.config['n_batch']
+#if wandb.config['n_epoch']:
+#    print("n_epoch set from wandb: ", wandb.config['n_epoch'])
+#    wandb.config['training']['n_epoch'] = wandb.config['n_epoch']
 
 class SaverCallback(BaseCallback):
-    def __init__(self, env, model, data_dir, freq=1000000, verbose=False):
+    def __init__(self, env, model, data_dir, freq=10000000, verbose=False):
         super(SaverCallback, self).__init__(verbose)
         self.env = env
         self.freq = freq
@@ -69,22 +86,24 @@ class SaverCallback(BaseCallback):
 
         if self.vis == True:
             time.sleep(0.01)
+
         return True
 
 # create environment from the configuration file
-env = VecEnv(RaisimGymEnv(rsc_path, dump(cfg['environment'], Dumper=RoundTripDumper)), cfg['environment'])
+env = VecEnv(RaisimGymEnv(rsc_path, dump(wandb.config['environment'], Dumper=RoundTripDumper)), wandb.config['environment'])
 env.turn_off_visualization()
 obs = env.reset()
 
 #wandb.config = cfg
 
-n_steps = int(cfg['environment']['max_time'] / cfg['environment']['control_dt'])
-policy_kwargs = dict(net_arch=[dict(pi=cfg['architecture']['policy_net'],vf=cfg['architecture']['value_net'])])
+n_steps = int(float(wandb.config['environment']['max_time']) / float(wandb.config['environment']['control_dt']))
+policy_kwargs = dict(net_arch=[dict(pi=wandb.config['architecture']['policy_net'],vf=wandb.config['architecture']['value_net'])])
 model = PPO(MlpPolicy, env,
             n_steps=n_steps,
+            learning_rate=0.0003,
             verbose=1,
-            batch_size=int(n_steps*env.num_envs/cfg['training']['n_batch']),
-            n_epochs=cfg['training']['n_epoch'], policy_kwargs=policy_kwargs, tensorboard_log=saver.data_dir)
+            batch_size=int(n_steps*env.num_envs/int(wandb.config['training']['n_batch'])),
+            n_epochs=wandb.config['training']['n_epoch'], policy_kwargs=policy_kwargs, tensorboard_log=saver.data_dir)
 
 if weight_path != '':
     print("Loading parameters from: ", weight_path)
@@ -95,7 +114,7 @@ saver_callback = SaverCallback(env, model, saver.data_dir)
 update = 0
 
 
-model.learn(total_timesteps=50000000, callback=saver_callback)
+model.learn(total_timesteps=200000000, callback=saver_callback)
 
 #  model.learn(total_timesteps=1000000)
 #  env.turn_on_visualization()

@@ -3,15 +3,15 @@ record_video: yes
 
 environment:
   render: True
-  num_envs: 100
+  num_envs: 800
   eval_every_n: 20
-  num_threads: 24
+  num_threads: 8
   simulation_dt: 0.0025
   control_dt: 0.01
   max_time: 4.0
   reward:
     r_lv:
-      coeff: 0.05
+      coeff: 0.2
     r_av:
       coeff: 0.05
     r_b:
@@ -19,14 +19,14 @@ environment:
     r_s:
       coeff: 0.025
     r_fc:
-      coeff: 0.01
+      coeff: 0.3
     r_t:
       coeff: 2e-5
 
 architecture:
-  policy_net: [64, 64]
-  value_net: [64, 64]
+  policy_net: [256, 256]
+  value_net: [256, 256]
 
 training:
-  n_batch: 4
+  n_batch: 60
   n_epoch: 4
