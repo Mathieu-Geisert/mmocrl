@@ -120,6 +120,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     if(visualize_) server_->lockVisualizationServerMutex();
     for(int i=0; i< int(control_dt_ / simulation_dt_ + 1e-10); i++){
       actuator_->advance();
+      disturbance_->advance();
       world_->integrate();
     }
     robotState_->advance();

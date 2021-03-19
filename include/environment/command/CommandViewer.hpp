@@ -60,8 +60,8 @@ public:
     double length = velocityScale * command.head(2).norm();
     velocityCommandVisual_->setCylinderSize(velocitySize, length);
     command = state_.getRotationMatrix() * command;
-    cylPosition[0] += command[0] * 0.5 * length;
-    cylPosition[1] += command[1] * 0.5 * length;
+    cylPosition[0] += command[0] * 0.5 * velocityScale;
+    cylPosition[1] += command[1] * 0.5 * velocityScale;
     velocityCommandVisual_->setPosition(cylPosition);
     velocityCommandVisual_->setOrientation(quat);
   }

@@ -70,6 +70,12 @@ add_executable(test_rewards
 target_link_libraries(test_rewards
         ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
 target_compile_options(test_rewards PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
+
+add_executable(test_disturbance
+        test/test_disturbance.cpp)
+target_link_libraries(test_disturbance
+        ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
+target_compile_options(test_disturbance PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
 endif()
 
 
