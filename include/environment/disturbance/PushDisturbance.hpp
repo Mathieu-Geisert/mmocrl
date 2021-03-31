@@ -49,7 +49,7 @@ public:
     disturbance_[1] = std::cos(el) * std::sin(az);
     disturbance_[2] = std::sin(el);
 
-    disturbance_ *= scaling;
+    disturbance_ *= rn_.sampleUniform01() * scaling;
   }
 
   void setZero() { disturbance_.setZero(); }

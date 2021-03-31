@@ -17,11 +17,11 @@ import wandb
 #os.environ["WANDB_MODE"] = "dryrun"
 
 # configuration
-#parser = argparse.ArgumentParser()
-#parser.add_argument('-w', '--weight', help='pre-trained weight path', type=str, default='')
-#args = parser.parse_args()
-#weight_path = args.weight
-weight_path=''
+parser = argparse.ArgumentParser()
+parser.add_argument('-w', '--weight', help='pre-trained weight path', type=str, default='')
+args = parser.parse_args()
+weight_path = args.weight
+#weight_path=''
 
 task_path = os.path.dirname(os.path.realpath(__file__))
 rsc_path = task_path + "/../../rsc"

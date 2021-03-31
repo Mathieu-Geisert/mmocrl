@@ -86,6 +86,7 @@ class ENVIRONMENT : public RaisimGymEnv {
   void init() final { }
 
   void reset() final {
+    gc_init_[2] = terrain_->getHeight(gc_init_[0], gc_init_[1]) + 0.5;
     anymal_->setState(gc_init_, gv_init_);
     actuator_->reset();
     footMotion_->reset();
@@ -120,7 +121,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     if(visualize_) server_->lockVisualizationServerMutex();
     for(int i=0; i< int(control_dt_ / simulation_dt_ + 1e-10); i++){
       actuator_->advance();
-      disturbance_->advance();
+      disturbance_->advance(0.5);
       world_->integrate();
     }
     robotState_->advance();
@@ -140,6 +141,8 @@ class ENVIRONMENT : public RaisimGymEnv {
     if (v_pr < 0.6)
       r_lv = exp(-2.0*pow(v_pr - 0.6, 2));
     rewards_.record("r_lv", r_lv);
+
+    if (v_pr > 0.45) { P_traversability_++; } 
 //    if(visualize_) {
 //      it_++;
 //      if (it_ % 10 == 0) { 
@@ -204,8 +207,39 @@ class ENVIRONMENT : public RaisimGymEnv {
         << std::endl;
       //usleep(100000);
     }
+
+    it_++;
+    if (it_ > 1000) {
+      double traversability = double(P_traversability_) / double(it_);
+      if (terrain_->getTerrainType() == TerrainType::Flat) {
+        if (traversability > 0.95) {
+          generateTerrainHills();
+        }
+//        if (traversability > 0.4) {
+//          terrain_->setRandomFriction(0.2, 0.5);
+//        }
+      }
+      else {
+        if (traversability < 0.4 || traversability > 0.9) {
+          generateTerrainHills();
+        }
+      }
+      it_ = 0;
+      P_traversability_ = 0;
+    }
     
     return rewards_.sum();
+  }
+
+  void generateTerrainHills() {
+    Eigen::Vector3d terrain_params;
+    terrain_params[0] = rn_->sampleUniform01() * 0.05;
+    terrain_params[1] = rn_->sampleUniform01() * 0.8 + 0.2;
+    terrain_params[2] = rn_->sampleUniform01() * 2.8 + 0.2; 
+    terrain_->generateTerrain(TerrainType::Hills, terrain_params);
+    gc_init_[2] = terrain_->getHeight(gc_init_[0], gc_init_[1]) + 0.5;
+    anymal_->setState(gc_init_, gv_init_);
+//  terrain_->setRandomFriction(0.2, 0.5);
   }
 
   void observe(Eigen::Ref<EigenVec> ob) final {
@@ -267,6 +301,7 @@ class ENVIRONMENT : public RaisimGymEnv {
   //raisim::Reward rewards_;
   bool badlyConditioned_ = false;
   int it_ = 0;
+  int P_traversability_ = 0;
   bool visualize_ = false;
 };
 }

@@ -71,6 +71,9 @@ class Terrain {
 
     ~Terrain() = default;
 
+
+  TerrainType getTerrainType() { return terrainType_; }
+
   Eigen::Vector3d getTerrainNormal(double posX, double posY, double delta = 1.0) const
   {
     Eigen::Matrix<double, 3, 1> terrainNormal;
@@ -119,13 +122,13 @@ class Terrain {
 
   const Eigen::Matrix<T, Nlimb, 1>& getFootFriction() const { return footFriction_; }
 
-  //void setRandomFriction(double low, double mid) {
-  //  for (int i = 0; i < 4; i++) {
-  //    footFriction_[i] = std::max(mid + 0.1 * rn_.sampleNormal(), low);
-  //    world_->setMaterialPairProp("terrain", footNames_[i], footFriction_[i], 0.0, 0.0);
-  //  }
-  //  world_->setDefaultMaterial(0.1 + rn_.sampleUniform01() * 0.4, 0.0, 0.0);
-  //}
+  void setRandomFriction(double low, double mid) {
+    for (int i = 0; i < 4; i++) {
+      footFriction_[i] = std::max(mid + 0.1 * rn_.sampleNormal(), low);
+      world_->setMaterialPairProp("terrain", footNames_[i], footFriction_[i], 0.0, 0.0);
+    }
+    world_->setDefaultMaterial(0.1 + rn_.sampleUniform01() * 0.4, 0.0, 0.0);
+  }
   
 
   void generateTerrain(TerrainType terrainType, Eigen::Matrix<double, 3, 1> &params)
@@ -291,7 +294,7 @@ class Terrain {
   void generateTerrainHills(Eigen::Matrix<double, 3, 1> &params)
   {
     //TODO: manage param.
-    terrainProp_.frequency = 0.1 + params[1]; ///
+    terrainProp_.frequency = params[1]; ///
     terrainProp_.fractalOctaves = 1;
 
     if (seed_ == -1) {
