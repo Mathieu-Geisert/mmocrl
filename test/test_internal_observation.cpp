@@ -81,11 +81,10 @@ int main(int argc, char *argv[]) {
     actuator.advance();
     server->lockVisualizationServerMutex();
     world->integrate();
-    //std::cout << "obs: " << obs.getObservation().transpose() << std::endl;
     commandViewer.advance();
     server->unlockVisualizationServerMutex();
-    
-    std::cout << "baseVelInBaseFrame: " << robotState.getBaseVelInBaseFrame().transpose() << std::endl; 
+
+    std::cout << "Motion phase: " << obs.getObservation().transpose().segment(52, 8) << std::endl;
 
     auto stop = high_resolution_clock::now();
     time[i] = std::chrono::duration<double>(duration_cast<microseconds>(stop - start)).count(); 
