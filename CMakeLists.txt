@@ -8,7 +8,6 @@ find_package(raisim CONFIG REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenMP REQUIRED)
-#find_package(Eigen3 REQUIRED)
 
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 

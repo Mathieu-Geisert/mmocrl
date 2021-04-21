@@ -30,7 +30,7 @@
 template<typename T, int Nlimb>
 class ContactManager {
 public:
-  ContactManager(raisim::ArticulatedSystem* anymal, const State<T>& robotState, const Terrain<T, Nlimb>& terrain, double simulation_dt)
+  ContactManager(raisim::ArticulatedSystem* anymal, const State<T>* robotState, const Terrain<T, Nlimb>* terrain, double simulation_dt)
    :anymal_(anymal), robotState_(robotState), terrain_(terrain), simulation_dt_(simulation_dt)
   {
     footNormal_.reserve(Nlimb);
@@ -136,7 +136,7 @@ public:
       }
     }
    
-    auto Rb = robotState_.getRotationMatrix();
+    auto Rb = robotState_->getRotationMatrix();
     //netContacts_ /= simulation_dt_;
     //netContacts_b = Rb.transpose() * netContacts_;
 
@@ -164,10 +164,10 @@ public:
     footHeightWrtLocalTerrain_.setZero(); 
 
     //TODO: avoid recomputing angles? 
-    auto Rb = robotState_.getRotationMatrix();
+    auto Rb = robotState_->getRotationMatrix();
     Eigen::Matrix<T, 2, 1> x, y;
-    x = footMargin * (Rb * robotState_.getXHorizontal()).template head<2>();
-    y = footMargin * (Rb * robotState_.getYHorizontal()).template head<2>();
+    x = footMargin * (Rb * robotState_->getXHorizontal()).template head<2>();
+    y = footMargin * (Rb * robotState_->getYHorizontal()).template head<2>();
     
     float Angle = 2.0 * M_PI / (float) (nbPoint - 1);
     for (size_t i = 1; i < nbPoint; i++) {
@@ -186,7 +186,7 @@ public:
       anymal_->getPosition(footID, footPosInShankFrame_[fid], footPosW);
       for (size_t k = 0; k < nbPoint; k++) {
         footHeightWrtLocalTerrain_(fid, k) = footPosW[2] -
-            terrain_.getHeight(footPosW[0] + footHeightWrtLocalTerrain_(Nlimb, k), footPosW[1] + footHeightWrtLocalTerrain_(Nlimb+1, k));
+            terrain_->getHeight(footPosW[0] + footHeightWrtLocalTerrain_(Nlimb, k), footPosW[1] + footHeightWrtLocalTerrain_(Nlimb+1, k));
       }
     }
   }
@@ -232,8 +232,8 @@ protected:
   Eigen::Matrix<T, Nlimb+2, -1> footHeightWrtLocalTerrain_; // z_foot1, ..., z_footn, dx, dy
   
   raisim::ArticulatedSystem* anymal_;
-  const State<T>& robotState_;
-  const Terrain<T, Nlimb>& terrain_;
+  const State<T>* robotState_;
+  const Terrain<T, Nlimb>* terrain_;
   double simulation_dt_;
 }; // end of class State
 

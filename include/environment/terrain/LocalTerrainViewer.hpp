@@ -28,7 +28,7 @@ constexpr double Size = 0.15;
 template<typename T, int Nlimb>
 class LocalTerrainViewer {
 public:
-  LocalTerrainViewer(raisim::RaisimServer* server, raisim::ArticulatedSystem* anymal, const ContactManager<T, Nlimb>& contact) 
+  LocalTerrainViewer(raisim::RaisimServer* server, raisim::ArticulatedSystem* anymal, const ContactManager<T, Nlimb>* contact) 
   : server_(server), anymal_(anymal), contact_(contact)
   {
   }
@@ -37,7 +37,7 @@ public:
 
   void advance()
   {
-    const Eigen::Matrix<T, 6, -1>& dfoot = contact_.getFootHeightWrtLocalTerrain();
+    const Eigen::Matrix<T, 6, -1>& dfoot = contact_->getFootHeightWrtLocalTerrain();
     if (dfoot.cols() > terrainVisual_.size())
         resize(dfoot.cols());
     raisim::Vec<3> footPosW;
@@ -70,7 +70,7 @@ protected:
 
   raisim::RaisimServer* server_;
   raisim::ArticulatedSystem* anymal_;
-  const ContactManager<T, Nlimb>& contact_;
+  const ContactManager<T, Nlimb>* contact_;
   std::vector<raisim::Visuals*> terrainVisual_;
 }; // end of class LocalTerrainViewer
 

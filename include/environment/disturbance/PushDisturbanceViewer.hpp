@@ -31,7 +31,7 @@ constexpr double forceSize = 0.1;
 template<typename T>
 class PushDisturbanceViewer {
 public:
-  PushDisturbanceViewer(raisim::RaisimServer* server, const State<T>& state, const PushDisturbance<T>& disturbance) 
+  PushDisturbanceViewer(raisim::RaisimServer* server, const State<T>* state, const PushDisturbance<T>* disturbance) 
   : server_(server), disturbance_(disturbance), state_(state)
   {
     forceDisturbanceVisual_ = server->addVisualCylinder("push_disturbance", forceSize, forceScale, 1., 0., 0., 0.);
@@ -42,7 +42,7 @@ public:
   void advance()
   {
     //Update velocity command.
-    Eigen::Matrix<T, 3, 1> disturbance = disturbance_.getDisturbance();
+    Eigen::Matrix<T, 3, 1> disturbance = disturbance_->getDisturbance();
 
     if (disturbance.isZero(0)) {
       //Visual off (transparent) if no force
@@ -62,7 +62,7 @@ public:
       double roll = 0.0, pitch = 1.57 - el, yaw = az;
       Eigen::Vector4d quat;
       quat = Math::MathFunc::EulertoQuat<double>(roll, pitch, yaw);
-      Eigen::Matrix<double, 3, 1> cylPosition = state_.getBasePos().template cast<double>();
+      Eigen::Matrix<double, 3, 1> cylPosition = state_->getBasePos().template cast<double>();
       cylPosition[2] += 0.0;
       double length = forceScale * norm;
       forceDisturbanceVisual_->setCylinderSize(forceSize, length);
@@ -77,8 +77,8 @@ public:
 
 protected:
   raisim::RaisimServer* server_;
-  const PushDisturbance<T>& disturbance_;
-  const State<T>& state_;
+  const PushDisturbance<T>* disturbance_;
+  const State<T>* state_;
   raisim::Visuals* forceDisturbanceVisual_;
 }; // end of class CommandViewer
 

@@ -34,7 +34,7 @@ template<typename T, int Nlimb>
 class InternalObservation
 {
   public:
-    InternalObservation(const State<T>& state, const Command<T>& command, const FootMotionGenerator<T, Nlimb> footMotion, const ActuatorModelPNetwork<T>& actuator)
+    InternalObservation(const State<T>* state, const Command<T>* command, const FootMotionGenerator<T, Nlimb>* footMotion, const ActuatorModelPNetwork<T>* actuator)
      : state_(state), footMotion_(footMotion), actuator_(actuator), command_(command)
     {
 //      Eigen::Matrix<T, 12, 1> jointNominalConfig;
@@ -99,37 +99,37 @@ class InternalObservation
       Eigen::Matrix<T, 133, 1> observation;
 
       //command
-      observation.template head<3>() = command_.getCommand();
+      observation.template head<3>() = command_->getCommand();
      
      //robot state 
-      observation.template segment<3>(3) = state_.getGravityAxis();
-      observation.template segment<3>(6) = state_.getBaseVelInBaseFrame();
-      observation.template segment<3>(9) = state_.getBaseAngVelInBaseFrame();
-      observation.template segment<12>(12) = state_.getJointPos();
-      observation.template segment<12>(24) = state_.getJointVel();
+      observation.template segment<3>(3) = state_->getGravityAxis();
+      observation.template segment<3>(6) = state_->getBaseVelInBaseFrame();
+      observation.template segment<3>(9) = state_->getBaseAngVelInBaseFrame();
+      observation.template segment<12>(12) = state_->getJointPos();
+      observation.template segment<12>(24) = state_->getJointVel();
 
       //current jointError
-      observation.template segment<12>(36) = actuator_.getHistory().getLastJointPositionError();
+      observation.template segment<12>(36) = actuator_->getHistory().getLastJointPositionError();
 
       //footmotion
-      observation.template segment<4>(48) = footMotion_.getFrequencies();
-      Eigen::Matrix<T, 4, 1> phases = footMotion_.getPhases();
+      observation.template segment<4>(48) = footMotion_->getFrequencies();
+      Eigen::Matrix<T, 4, 1> phases = footMotion_->getPhases();
       for (size_t i = 0; i < 4; i++) {
         observation[52 + 2 * i] = std::sin(phases[i]);
         observation[52 + 2 * i + 1] = std::cos(phases[i]);
       }
 
       //actuator history
-      observation.template segment<12>(60) = actuator_.getHistory().getLastJointPositionError(PNetwork::NNHistory2);
-      observation.template segment<12>(72) = actuator_.getHistory().getLastJointPositionError(PNetwork::NNHistory1);
+      observation.template segment<12>(60) = actuator_->getHistory().getLastJointPositionError(PNetwork::NNHistory2);
+      observation.template segment<12>(72) = actuator_->getHistory().getLastJointPositionError(PNetwork::NNHistory1);
      
-      observation.template segment<12>(84) = actuator_.getHistory().getLastJointVelocity(PNetwork::NNHistory2);
-      observation.template segment<12>(96) = actuator_.getHistory().getLastJointVelocity(PNetwork::NNHistory1);
+      observation.template segment<12>(84) = actuator_->getHistory().getLastJointVelocity(PNetwork::NNHistory2);
+      observation.template segment<12>(96) = actuator_->getHistory().getLastJointVelocity(PNetwork::NNHistory1);
 
-      observation.template segment<12>(108) = actuator_.getHistory().getLastJointPositionTarget();
-      observation.template segment<12>(120) = actuator_.getHistory().getLastJointPositionTarget(4); // TODO: avoid hardcoding history = control_dt/simulation_dt
+      observation.template segment<12>(108) = actuator_->getHistory().getLastJointPositionTarget();
+      observation.template segment<12>(120) = actuator_->getHistory().getLastJointPositionTarget(4); // TODO: avoid hardcoding history = control_dt/simulation_dt
 
-      observation[132] = footMotion_.getBaseFrequency();
+      observation[132] = footMotion_->getBaseFrequency();
 
       return observation;
       //return scaling_.apply(observation);
@@ -137,9 +137,9 @@ class InternalObservation
 
   protected:
     //ScalingAndOffset scaling_;
-    const State<T>& state_;
-    const FootMotionGenerator<T, Nlimb> footMotion_;
-    const ActuatorModelPNetwork<T>& actuator_;
-    const Command<T>& command_;
+    const State<T>* state_;
+    const FootMotionGenerator<T, Nlimb>* footMotion_;
+    const ActuatorModelPNetwork<T>* actuator_;
+    const Command<T>* command_;
 }; // end of class InternalObservation
 

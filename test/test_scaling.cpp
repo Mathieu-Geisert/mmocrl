@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
                          -0.3 - 0.1, -0.2, h0_;
 
   ModelParametersAnymalC100<float> c100Params_;
-  InverseKinematics IK_(c100Params_);
+  InverseKinematics IK_(&c100Params_);
   Eigen::Vector3f sol;
   for (int i = 0; i < 4; i++) {
     IK_.IKSagittal(sol, footPositionOffset_.segment(3 * i, 3), i);

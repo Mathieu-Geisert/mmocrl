@@ -1,4 +1,4 @@
-/*
+/*`
  * =====================================================================================
  *
  *       Filename:  Terrain.hpp
@@ -46,8 +46,8 @@ class Terrain {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   public:
-    Terrain(raisim::World* world, const ModelParametersBase<T, Nlimb>& modelParameters, RandomNumberGenerator<T>& rn, double xSize=10., double ySize=10.)
-     : world_(world), terrainGenerator_(), footNames_(modelParameters.getFootNames()), rn_(rn)
+    Terrain(raisim::World* world, const ModelParametersBase<T, Nlimb>* modelParameters, RandomNumberGenerator<T>* rn, double xSize=10., double ySize=10.)
+     : world_(world), terrainGenerator_(), footNames_(modelParameters->getFootNames()), rn_(rn)
     {
       terrainProp_.xSize = xSize;
       terrainProp_.ySize = ySize;
@@ -121,10 +121,10 @@ class Terrain {
 
   //void setRandomFriction(double low, double mid) {
   //  for (int i = 0; i < 4; i++) {
-  //    footFriction_[i] = std::max(mid + 0.1 * rn_.sampleNormal(), low);
+  //    footFriction_[i] = std::max(mid + 0.1 * rn_->sampleNormal(), low);
   //    world_->setMaterialPairProp("terrain", footNames_[i], footFriction_[i], 0.0, 0.0);
   //  }
-  //  world_->setDefaultMaterial(0.1 + rn_.sampleUniform01() * 0.4, 0.0, 0.0);
+  //  world_->setDefaultMaterial(0.1 + rn_->sampleUniform01() * 0.4, 0.0, 0.0);
   //}
   
 
@@ -202,7 +202,7 @@ class Terrain {
         stepStart = max;
         cnt = 0;
       }
-      if (cnt == 0 && rn_.sampleUniform01() < 0.5) chamfer = true;
+      if (cnt == 0 && rn_->sampleUniform01() < 0.5) chamfer = true;
       else chamfer = false;
       for (int x = 0; x < terrainProp_.xSamples; x++) {
         size_t idx = y * terrainProp_.xSamples + x;
@@ -226,7 +226,7 @@ class Terrain {
         stepStart = max;
         cnt = 0;
       }
-      if (cnt == 0 && rn_.sampleUniform01() < 0.5) chamfer = true;
+      if (cnt == 0 && rn_->sampleUniform01() < 0.5) chamfer = true;
       else chamfer = false;
       for (int x = 0; x < terrainProp_.xSamples; x++) {
         size_t idx = y * terrainProp_.xSamples + x;
@@ -257,7 +257,7 @@ class Terrain {
     ///steps
     for (size_t i = 0; i < xNum; i++) {
       for (size_t j = 0; j < yNum; j++) {
-        double h = rn_.sampleUniform01() * stepHeight + 0.5;
+        double h = rn_->sampleUniform01() * stepHeight + 0.5;
 
         mapMat.block(gridWidth_ * i, gridWidth_ * j, gridWidth_, gridWidth_).setConstant(h);
       }
@@ -295,7 +295,7 @@ class Terrain {
     terrainProp_.fractalOctaves = 1;
 
     if (seed_ == -1) {
-      terrainGenerator_.setSeed(rn_.intRand(0, 100));
+      terrainGenerator_.setSeed(rn_->intRand(0, 100));
     } else {
       terrainGenerator_.setSeed(seed_);
     }
@@ -313,7 +313,7 @@ class Terrain {
     mapMat *= params[2] + 0.2;
 
     for (size_t idx = 0; idx < heights_.size(); idx++) {
-      heights_[idx] += (params[0]) * rn_.sampleUniform01();
+      heights_[idx] += (params[0]) * rn_->sampleUniform01();
     }
   }
 
@@ -342,7 +342,7 @@ class Terrain {
     terrainProp_.fractalOctaves = 1;
 
     if (seed_ == -1) {
-      terrainGenerator_.setSeed(rn_.intRand(0, 100));
+      terrainGenerator_.setSeed(rn_->intRand(0, 100));
     } else {
       terrainGenerator_.setSeed(seed_);
     }
@@ -369,7 +369,7 @@ class Terrain {
       for (size_t j = 0; j < yNum; j++) {
         double h = mapMat.block(gridWidth * i, gridWidth * j, gridWidth, gridWidth).mean();
 
-        if (rn_.sampleUniform01() < 0.5) {
+        if (rn_->sampleUniform01() < 0.5) {
           mapMat.block(gridWidth * i, gridWidth * j, gridWidth, gridWidth).setConstant(h);
         }
       }
@@ -387,7 +387,7 @@ class Terrain {
     std::vector<double> heights_;
     std::vector<std::string> footNames_;
     Eigen::Matrix<T, Nlimb, 1> footFriction_;
-    RandomNumberGenerator<T>& rn_;
+    RandomNumberGenerator<T>* rn_;
     int seed_ = 0;
 }; // end of clann Terrain
 
