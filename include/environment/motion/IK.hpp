@@ -13,29 +13,29 @@ template<typename T, int Nlimb>
 class InverseKinematics {
 
  public:
-  InverseKinematics(const ModelParametersBase<T, Nlimb>& model) 
+  InverseKinematics(const ModelParametersBase<T, Nlimb>* model) 
   //: model_(model)
   {
     positionBaseToHAACenterInBaseFrame_.resize(4);
-    positionBaseToHAACenterInBaseFrame_ = model.getPositionBaseToHipInBaseFrame();
+    positionBaseToHAACenterInBaseFrame_ = model->getPositionBaseToHipInBaseFrame();
     for (size_t i = 0; i < 4; i++) {
-      positionBaseToHAACenterInBaseFrame_[i][0] += model.getPositionHipToThighInHipFrame()[i][0];
-      hfe_to_foot_y_offset_[i] = model.getPositionThighToShankInThighFrame()[i][1];
-      hfe_to_foot_y_offset_[i] += model.getPositionShankToFootInShankFrame()[i][1];
+      positionBaseToHAACenterInBaseFrame_[i][0] += model->getPositionHipToThighInHipFrame()[i][0];
+      hfe_to_foot_y_offset_[i] = model->getPositionThighToShankInThighFrame()[i][1];
+      hfe_to_foot_y_offset_[i] += model->getPositionShankToFootInShankFrame()[i][1];
       haa_to_foot_y_offset_[i] = hfe_to_foot_y_offset_[i];
-      haa_to_foot_y_offset_[i] += model.getPositionHipToThighInHipFrame()[i][1];
+      haa_to_foot_y_offset_[i] += model->getPositionHipToThighInHipFrame()[i][1];
     }
 
-    a1_squared_ = model.getPositionThighToShankInThighFrame()[0][0] * model.getPositionThighToShankInThighFrame()[0][0]
-        + model.getPositionThighToShankInThighFrame()[0][2] * model.getPositionThighToShankInThighFrame()[0][2];
-    a2_squared_ = model.getPositionShankToFootInShankFrame()[0][0] * model.getPositionShankToFootInShankFrame()[0][0]
-        + model.getPositionShankToFootInShankFrame()[0][2] * model.getPositionShankToFootInShankFrame()[0][2];
+    a1_squared_ = model->getPositionThighToShankInThighFrame()[0][0] * model->getPositionThighToShankInThighFrame()[0][0]
+        + model->getPositionThighToShankInThighFrame()[0][2] * model->getPositionThighToShankInThighFrame()[0][2];
+    a2_squared_ = model->getPositionShankToFootInShankFrame()[0][0] * model->getPositionShankToFootInShankFrame()[0][0]
+        + model->getPositionShankToFootInShankFrame()[0][2] * model->getPositionShankToFootInShankFrame()[0][2];
 
     minReachSP_ = std::abs(sqrt(a1_squared_) - std::sqrt(a2_squared_)) + 0.1;
     maxReachSP_ = std::sqrt(a1_squared_) + std::sqrt(a2_squared_) - 0.05;
     minReach_ = std::sqrt(haa_to_foot_y_offset_[0] * haa_to_foot_y_offset_[0] + minReachSP_ * minReachSP_);
     maxReach_ = std::sqrt(haa_to_foot_y_offset_[0] * haa_to_foot_y_offset_[0] + maxReachSP_ * maxReachSP_);
-    KFEOffset_ = std::abs(std::atan(model.getPositionShankToFootInShankFrame()[0][0] / model.getPositionShankToFootInShankFrame()[0][2]));
+    KFEOffset_ = std::abs(std::atan(model->getPositionShankToFootInShankFrame()[0][0] / model->getPositionShankToFootInShankFrame()[0][2]));
   }
 
   ~InverseKinematics() = default;

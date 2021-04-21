@@ -109,7 +109,7 @@ class NoisyState : public State<T> {
   //TODO: Add proper interface for loading/changing noise scaling.
 
   public:
-    NoisyState(raisim::ArticulatedSystem* anymal, RandomNumberGenerator<T>& rn) 
+    NoisyState(raisim::ArticulatedSystem* anymal, RandomNumberGenerator<T>* rn) 
       : State<T>(anymal), rn_(rn)
     {
       updateEGBias();
@@ -127,19 +127,19 @@ class NoisyState : public State<T> {
       
       /// noisify body vel
       for (int i = 0; i < 3; i++)
-        this->u_[i] += rn_.sampleUniform() * 0.1;
+        this->u_[i] += rn_->sampleUniform() * 0.1;
   
       /// noisify body angvel
       for (int i = 3; i < 6; i++)
-        this->u_[i] += rn_.sampleUniform() * 0.2;
+        this->u_[i] += rn_->sampleUniform() * 0.2;
   
       /// noisify joint position
       for (int i = 7; i < 19; i++)
-        this->q_[i] += rn_.sampleUniform() * 0.01;
+        this->q_[i] += rn_->sampleUniform() * 0.01;
   
       /// noisify joint vel
       for (int i = 6; i < 18; i++)
-        this->u_[i] += rn_.sampleUniform() * 1.5;
+        this->u_[i] += rn_->sampleUniform() * 1.5;
       
       this->updateDependantVariables();
     }
@@ -147,14 +147,14 @@ class NoisyState : public State<T> {
     void updateEGBias(double scaling = 0.1)
     {
       Eigen::Matrix<T, 3, 1> axis;
-      axis << rn_.sampleUniform01(), rn_.sampleUniform01(), rn_.sampleUniform01();
+      axis << rn_->sampleUniform01(), rn_->sampleUniform01(), rn_->sampleUniform01();
       axis.normalize();
-      eg_bias_ = scaling * rn_.sampleUniform() * axis;
+      eg_bias_ = scaling * rn_->sampleUniform() * axis;
     }
 
     const Eigen::Matrix<T, 3, 1>& getEGBias() const { return eg_bias_; }
 
   protected:
-    RandomNumberGenerator<T>& rn_;
+    RandomNumberGenerator<T>* rn_;
     Eigen::Matrix<T, 3, 1> eg_bias_; 
 }; // end of class NoisyState

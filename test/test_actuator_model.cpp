@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
   RandomNumberGenerator<float> rn;
   ModelParametersAnymalC100<float> paramsC100;
-  Terrain terrainGenerator(world, paramsC100, rn);
+  Terrain terrainGenerator(world, &paramsC100, &rn);
 
   int gcDim = anymal->getGeneralizedCoordinateDim();
   int gvDim = anymal->getDOF();

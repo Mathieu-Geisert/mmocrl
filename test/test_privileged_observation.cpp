@@ -40,18 +40,18 @@ int main(int argc, char *argv[]) {
   server->unlockVisualizationServerMutex();
 
   RandomNumberGenerator<float> rn;
-  PushDisturbance disturbance(anymal, rn);
+  PushDisturbance disturbance(anymal, &rn);
   ModelParametersAnymalC100<float> c100Params;
   State<float> robotState(anymal);
-  Terrain terrainGenerator(world, c100Params, rn);
+  Terrain terrainGenerator(world, &c100Params, &rn);
 
   std::array<float, 9> array;
   //Eigen::Matrix3f::Map(array.data()) = robotState.getRotationMatrix();
   //for (int i=0; i<9; i++)
   //  std::cout << array[i] << std::endl;
 
-  ContactManager contact(anymal, robotState, terrainGenerator, 0.0025);
-  PrivilegedObservation<float, 4> observation(contact, terrainGenerator, robotState, disturbance);
+  ContactManager contact(anymal, &robotState, &terrainGenerator, 0.0025);
+  PrivilegedObservation<float, 4> observation(&contact, &terrainGenerator, &robotState, &disturbance);
 
   int gcDim = anymal->getGeneralizedCoordinateDim();
   int gvDim = anymal->getDOF();
@@ -62,10 +62,10 @@ int main(int argc, char *argv[]) {
   gc_init.tail(12) = c100Params.getReferenceJointConfiguration();
   anymal->setState(gc_init.template cast<double>(), gv_init.template cast<double>());
   
-  InverseKinematics IK(c100Params);
+  InverseKinematics IK(&c100Params);
   ActuatorModelPNetwork<float> actuator(anymal, actuator_network_path);
 
-  FootMotionGenerator footMotion(c100Params, robotState, 2, 0.2, 0.0025);
+  FootMotionGenerator footMotion(&c100Params, &robotState, 2, 0.2, 0.0025);
   Eigen::Vector3f e_g, sol;
   e_g.setZero();
   e_g[2] = 1.;

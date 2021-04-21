@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
 
   RandomNumberGenerator<float> rn;
   ModelParametersAnymalC100<float> c100Params;
-  Terrain terrainGenerator(world, c100Params, rn);
-  InverseKinematics IK(c100Params);
+  Terrain terrainGenerator(world, &c100Params, &rn);
+  InverseKinematics IK(&c100Params);
   ActuatorModelPNetwork<float> actuator(anymal, actuator_network_path);
 
   int gcDim = anymal->getGeneralizedCoordinateDim();
@@ -41,8 +41,8 @@ int main(int argc, char *argv[]) {
   gc_init.tail(12) = c100Params.getReferenceJointConfiguration();
   anymal->setState(gc_init.template cast<double>(), gv_init.template cast<double>());
 
-  NoisyState robotState(anymal, rn);
-  FootMotionGenerator footMotion(c100Params, robotState, 2, 0.2, 0.0025);
+  NoisyState robotState(anymal, &rn);
+  FootMotionGenerator footMotion(&c100Params, &robotState, 2, 0.2, 0.0025);
   Eigen::Vector3f e_g, sol;
   e_g.setZero();
   e_g[2] = 1.;

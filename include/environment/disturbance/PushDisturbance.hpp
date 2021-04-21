@@ -27,7 +27,7 @@
 template<typename T>
 class PushDisturbance {
 public:
-  PushDisturbance(raisim::ArticulatedSystem* anymal, RandomNumberGenerator<T>& rn, double simulation_dt = 0.0025)
+  PushDisturbance(raisim::ArticulatedSystem* anymal, RandomNumberGenerator<T>* rn, double simulation_dt = 0.0025)
   : anymal_(anymal), rn_(rn), simulation_dt_(simulation_dt), duration_max_step_(0), duration_current_step_(0)
   {
     disturbance_.setZero();
@@ -37,14 +37,14 @@ public:
 
   void sampleDisturbance(Eigen::Matrix<T, 3, 1> scaling, Eigen::Matrix<T, 3, 1> offset) 
   {
-    disturbance_ << rn_.sampleUniform(), rn_.sampleUniform(), rn_.sampleUniform();
+    disturbance_ << rn_->sampleUniform(), rn_->sampleUniform(), rn_->sampleUniform();
     disturbance_ = disturbance_.cwiseProduct(scaling) + offset;    
   }
   
   void sampleDisturbance(double scaling = 120.0) 
   {
-    double az = M_PI * rn_.sampleUniform();
-    double el = M_PI_2 * rn_.sampleUniform();
+    double az = M_PI * rn_->sampleUniform();
+    double el = M_PI_2 * rn_->sampleUniform();
     disturbance_[0] = std::cos(el) * std::cos(az);
     disturbance_[1] = std::cos(el) * std::sin(az);
     disturbance_[2] = std::sin(el);
@@ -72,7 +72,7 @@ public:
       duration_max_step_ = int(duration / simulation_dt_);
       
       //add disturbance only with a certain paobability
-      if ( rn_.sampleUniform01() < probability ) {
+      if ( rn_->sampleUniform01() < probability ) {
         sampleDisturbance(scaling);
       }
       else {
@@ -88,7 +88,7 @@ public:
 
 protected:
   raisim::ArticulatedSystem* anymal_;
-  RandomNumberGenerator<T>& rn_;
+  RandomNumberGenerator<T>* rn_;
   Eigen::Matrix<T, 3, 1> disturbance_;
   double simulation_dt_;
   int duration_max_step_;

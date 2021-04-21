@@ -38,7 +38,7 @@ public:
   //constexpr int PrivilegedprivilegedObservationDim = StateDim + sampleN + 4 + 12 + 12 + 4 + 8 + 3; // StateDim = 133, sampleN = 9*Nlimb
   //static constexpr int ObservationSize = 
 
-  PrivilegedObservation(const ContactManager<T, Nlimb>& contact, const Terrain<T, Nlimb>& terrain, const State<T>& robotState, const PushDisturbance<T>& disturbance)
+  PrivilegedObservation(const ContactManager<T, Nlimb>* contact, const Terrain<T, Nlimb>* terrain, const State<T>* robotState, const PushDisturbance<T>* disturbance)
   : contact_(contact), terrain_(terrain), robotState_(robotState), disturbance_(disturbance)
   {
   }
@@ -48,7 +48,7 @@ public:
   Eigen::Matrix<T, -1, 1> getObservation() {
     Eigen::Matrix<T, -1, 1> privilegedObservation;
 
-    const auto& footPosWrtTerrain = contact_.getFootHeightWrtLocalTerrain();
+    const auto& footPosWrtTerrain = contact_->getFootHeightWrtLocalTerrain();
     int nPointTerrain = footPosWrtTerrain.cols();
     int observationSize = Nlimb * nPointTerrain + Nlimb*10 + 3;
     privilegedObservation.resize(observationSize,1);
@@ -67,13 +67,13 @@ public:
     }
 
     //FootContactprivilegedObservation
-    const auto& footContacts = contact_.getFootContacts();
+    const auto& footContacts = contact_->getFootContacts();
     for (int i=0; i<Nlimb; i++) {
       privilegedObservation[idx++] = (footContacts[i] - 0.5) * 3.;
     }
 
     //netFootContact_b
-    const auto& netFootContacts = contact_.getNetFootContactsInBase();
+    const auto& netFootContacts = contact_->getNetFootContactsInBase();
     for (int i=0; i<Nlimb; i++) {
       privilegedObservation.template segment<3>(idx) = netFootContacts[i];
       //Scaling, Offset and bounds
@@ -88,7 +88,7 @@ public:
     }
 
     //FootNormal_b
-    const auto& footNormals = contact_.getFootNormalsInBase();
+    const auto& footNormals = contact_->getFootNormalsInBase();
     for (int i=0; i<Nlimb; i++) {
       privilegedObservation.template segment<3>(idx) = footNormals[i];
       //Scaling, Offset and bounds
@@ -100,35 +100,35 @@ public:
     }
 
     //FootFriction
-    const auto& footFrictions = terrain_.getFootFriction();
+    const auto& footFrictions = terrain_->getFootFriction();
     for (int i=0; i<Nlimb; i++) {
       privilegedObservation[idx++] = (footFrictions[i] - 0.6) * 2.0;
     }
 
     //ThighContacts
-    const auto& thighContacts = contact_.getThighContacts();
+    const auto& thighContacts = contact_->getThighContacts();
     for (int i=0; i<Nlimb; i++) {
       privilegedObservation[idx++] = (thighContacts[i] - 0.5) * 2.0;
     }
 
     //ShankContacts
-    const auto& shankContacts = contact_.getShankContacts();
+    const auto& shankContacts = contact_->getShankContacts();
     for (int i=0; i<Nlimb; i++) {
       privilegedObservation[idx++] = (shankContacts[i] - 0.5) * 2.0;
     }
 
     //disturbance on base.
-    const auto& Rb = robotState_.getRotationMatrix();
-    const auto& push = disturbance_.getDisturbance();
+    const auto& Rb = robotState_->getRotationMatrix();
+    const auto& push = disturbance_->getDisturbance();
     privilegedObservation.template segment<3>(idx) = 0.1 * Rb.transpose() * push;
 
     return privilegedObservation;
   }
 
 protected:
-  const ContactManager<T, Nlimb>& contact_;
-  const Terrain<T, Nlimb>& terrain_;
-  const State<T>& robotState_;
-  const PushDisturbance<T>& disturbance_;
+  const ContactManager<T, Nlimb>* contact_;
+  const Terrain<T, Nlimb>* terrain_;
+  const State<T>* robotState_;
+  const PushDisturbance<T>* disturbance_;
 }; // end of class PrivilegedObservation
 

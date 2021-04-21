@@ -31,22 +31,22 @@ int main(int argc, char *argv[]) {
   world->setTimeStep(0.0025);
 
   RandomNumberGenerator<float> rn;
-  PushDisturbance disturbance(anymal, rn);
+  PushDisturbance disturbance(anymal, &rn);
   ModelParametersAnymalC100<float> c100Params;
   State<float> robotState(anymal);
-  Terrain terrainGenerator(world, c100Params, rn);
-  Command command(robotState, rn);
-  CommandViewer commandViewer(server, robotState, command, terrainGenerator);
+  Terrain terrainGenerator(world, &c100Params, &rn);
+  Command command(&robotState, &rn);
+  CommandViewer commandViewer(server, &robotState, &command, &terrainGenerator);
 
-  ContactManager contact(anymal, robotState, terrainGenerator, 0.0025);
+  ContactManager contact(anymal, &robotState, &terrainGenerator, 0.0025);
   //PrivilegedObservation<float, 4> observation(contact, terrainGenerator, robotState, disturbance);
 
-  InverseKinematics IK(c100Params);
+  InverseKinematics IK(&c100Params);
   ActuatorModelPNetwork<float> actuator(anymal, actuator_network_path);
 
-  FootMotionGenerator footMotion(c100Params, robotState, 2, 0.2, 0.0025);
+  FootMotionGenerator footMotion(&c100Params, &robotState, 2, 0.2, 0.0025);
 
-  InternalObservation obs(robotState, command, footMotion, actuator);
+  InternalObservation obs(&robotState, &command, &footMotion, &actuator);
 
   //Init
   int gcDim = anymal->getGeneralizedCoordinateDim();
@@ -81,11 +81,10 @@ int main(int argc, char *argv[]) {
     actuator.advance();
     server->lockVisualizationServerMutex();
     world->integrate();
-    //std::cout << "obs: " << obs.getObservation().transpose() << std::endl;
     commandViewer.advance();
     server->unlockVisualizationServerMutex();
-    
-    std::cout << "baseVelInBaseFrame: " << robotState.getBaseVelInBaseFrame().transpose() << std::endl; 
+
+    std::cout << "Motion phase: " << obs.getObservation().transpose().segment(52, 8) << std::endl;
 
     auto stop = high_resolution_clock::now();
     time[i] = std::chrono::duration<double>(duration_cast<microseconds>(stop - start)).count(); 
