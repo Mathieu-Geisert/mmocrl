@@ -8,6 +8,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 from stable_baselines3.common.callbacks import BaseCallback
 from gyms.teacher.teacher import RaisimGymEnv
+from gyms.teacher.CustomNetwork import *
 from raisimGymTorch.stable_baselines3.RaisimSbGymVecEnv import RaisimSbGymVecEnv as VecEnv
 from raisimGymTorch.helper.raisim_gym_helper import ConfigurationSaver, load_param, tensorboard_launcher
 import argparse
@@ -36,6 +37,8 @@ cfg = YAML().load(open(task_path + "/cfg.yaml", 'r'))
 
 #wandb.init(project='mmocrl_flat_teacher', entity='mgeisert', sync_tensorboard=True, config=cfg)
 wandb.init(project='mmocrl_desktop_test_fps', entity='mgeisert', sync_tensorboard=True, config=cfg)
+wandb.save(task_path + "/cfg.yaml")
+wandb.save(task_path + "/Environment.hpp")
 
 #make nested values
 #if wandb.config['num_envs']:
@@ -97,7 +100,9 @@ obs = env.reset()
 #wandb.config = cfg
 
 n_steps = int(float(wandb.config['environment']['max_time']) / float(wandb.config['environment']['control_dt']))
-policy_kwargs = dict(net_arch=[dict(pi=wandb.config['architecture']['policy_net'],vf=wandb.config['architecture']['value_net'])])
+policy_kwargs = dict(net_arch=[dict(pi=wandb.config['architecture']['policy_net'],vf=wandb.config['architecture']['value_net'])],
+        features_extractor_class=PriviligedFeaturesExtractor, features_extractor_kwargs=dict())
+
 model = PPO(MlpPolicy, env,
             n_steps=n_steps,
             learning_rate=0.0003,
