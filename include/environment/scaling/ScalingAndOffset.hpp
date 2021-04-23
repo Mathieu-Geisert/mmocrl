@@ -28,7 +28,7 @@ class ScalingAndOffset {
 
   public:
     ScalingAndOffset() {}
-    ScalingAndOffset(Eigen::Matrix<T, -1, 1> scaling, Eigen::Matrix<T, -1, 1> offset)
+    ScalingAndOffset(Eigen::Matrix<T, -1, 1>& scaling, Eigen::Matrix<T, -1, 1>& offset)
     : scaling_(scaling),
       offset_(offset) 
     {

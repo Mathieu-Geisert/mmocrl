@@ -34,20 +34,20 @@ int main(int argc, char *argv[]) {
   RandomNumberGenerator<float> rn;
   ModelParametersAnymalC100<float> c100Params;
   State<float> robotState(anymal);
-  Terrain terrainGenerator(world, c100Params, rn);
-  Command command(robotState, rn);
-  CommandViewer commandViewer(server, robotState, command, terrainGenerator);
-  PushDisturbance disturbance(anymal, rn);
-  PushDisturbanceViewer disturbanceViewer(server, robotState, disturbance);
+  Terrain terrainGenerator(world, &c100Params, &rn);
+  Command command(&robotState, &rn);
+  CommandViewer commandViewer(server, &robotState, &command, &terrainGenerator);
+  PushDisturbance disturbance(anymal, &rn);
+  PushDisturbanceViewer disturbanceViewer(server, &robotState, &disturbance);
 
-  ContactManager contact(anymal, robotState, terrainGenerator, 0.0025);
+  ContactManager contact(anymal, &robotState, &terrainGenerator, 0.0025);
 
-  InverseKinematics IK(c100Params);
+  InverseKinematics IK(&c100Params);
   ActuatorModelPNetwork<float> actuator(anymal, actuator_network_path);
 
-  FootMotionGenerator footMotion(c100Params, robotState, 2, 0.2, 0.0025);
+  FootMotionGenerator footMotion(&c100Params, &robotState, 2, 0.2, 0.0025);
 
-  InternalObservation obs(robotState, command, footMotion, actuator);
+  InternalObservation obs(&robotState, &command, &footMotion, &actuator);
 
   //Init
   int gcDim = anymal->getGeneralizedCoordinateDim();

@@ -39,18 +39,18 @@ class ENVIRONMENT : public RaisimGymEnv {
     world_->setTimeStep(simulation_dt_);//0.0025);
 
     rn_ = std::make_shared<RandomNumberGenerator<float>>();
-    disturbance_ = std::make_shared<PushDisturbance<float>>(anymal_, *rn_);
+    disturbance_ = std::make_shared<PushDisturbance<float>>(anymal_, rn_.get());
     c100Params_ = std::make_shared<ModelParametersAnymalC100<float>>();
     robotState_ = std::make_shared<State<float>>(anymal_);
-    terrain_ = std::make_shared<Terrain<float, 4>>(world_.get(), *c100Params_, *rn_);
-    command_ = std::make_shared<Command<float>>(*robotState_, *rn_);
-    contact_ = std::make_shared<ContactManager<float, 4>>(anymal_, *robotState_, *terrain_, simulation_dt_);
-    IK_ = std::make_shared<InverseKinematics<float, 4>>(*c100Params_);
+    terrain_ = std::make_shared<Terrain<float, 4>>(world_.get(), c100Params_.get(), rn_.get());
+    command_ = std::make_shared<Command<float>>(robotState_.get(), rn_.get());
+    contact_ = std::make_shared<ContactManager<float, 4>>(anymal_, robotState_.get(), terrain_.get(), simulation_dt_);
+    IK_ = std::make_shared<InverseKinematics<float, 4>>(c100Params_.get());
     std::string actuator_network_path = resourceDir_+"/actuator/C100/seaModel_2500.txt";
     actuator_ = std::make_shared<ActuatorModelPNetwork<float>>(anymal_, actuator_network_path);
-    footMotion_ = std::make_shared<FootMotionGenerator<float, 4>>(*c100Params_, *robotState_, 1.3, 0.2, control_dt_);
-    privilegedObservation_ = std::make_shared<PrivilegedObservation<float, 4>>(*contact_, *terrain_, *robotState_, *disturbance_);
-    stateObservation_ = std::make_shared<InternalObservation<float, 4>>(*robotState_, *command_, *footMotion_, *actuator_);
+    footMotion_ = std::make_shared<FootMotionGenerator<float, 4>>(c100Params_.get(), robotState_.get(), 1.3, 0.2, control_dt_);
+    privilegedObservation_ = std::make_shared<PrivilegedObservation<float, 4>>(contact_.get(), terrain_.get(), robotState_.get(), disturbance_.get());
+    stateObservation_ = std::make_shared<InternalObservation<float, 4>>(robotState_.get(), command_.get(), footMotion_.get(), actuator_.get());
     stateScaling_ = std::make_shared<ScalingAndOffset<float>>(resourceDir_+"/scaling/state.yaml");
     actionScaling_ = std::make_shared<ScalingAndOffset<float>>(resourceDir_+"/scaling/action.yaml");
 
@@ -68,8 +68,8 @@ class ENVIRONMENT : public RaisimGymEnv {
     /// visualize if it is the first environment
     if (visualizable_) {
       server_ = std::make_unique<raisim::RaisimServer>(world_.get());
-      commandViewer_ = std::make_shared<CommandViewer<float, 4>>(server_.get(), *robotState_, *command_, *terrain_);
-      terrainViewer_ = std::make_shared<LocalTerrainViewer<float, 4>>(server_.get(), anymal_, *contact_);
+      commandViewer_ = std::make_shared<CommandViewer<float, 4>>(server_.get(), robotState_.get(), command_.get(), terrain_.get());
+      terrainViewer_ = std::make_shared<LocalTerrainViewer<float, 4>>(server_.get(), anymal_, contact_.get());
       server_->launchServer();
       server_->focusOn(anymal_);
     }

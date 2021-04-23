@@ -30,10 +30,10 @@ class FootMotionGenerator {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   public:
-    FootMotionGenerator(const ModelParametersBase<T, Nleg>& model, const State<T>& robotState, double baseFreq, double clearance, double control_dt)
+    FootMotionGenerator(const ModelParametersBase<T, Nleg>* model, const State<T>* robotState, double baseFreq, double clearance, double control_dt)
     : baseFreq_(baseFreq), 
       control_dt_(control_dt),
-      footPositionOffset_(model.getReferenceFootPositionOffset()),
+      footPositionOffset_(model->getReferenceFootPositionOffset()),
       robotState_(robotState)
     {
       clearance_.setConstant(clearance);
@@ -59,7 +59,7 @@ class FootMotionGenerator {
     Eigen::Matrix<T, Nleg*3, 1> advance(const Eigen::Matrix<T, Nleg, 1>& deltaFrequency)
     {
       Eigen::Matrix<T, Nleg*3, 1> footPos_Target(footPositionOffset_);
-      const Eigen::Matrix<T, 3, 1>& e_g = robotState_.getGravityAxis();
+      const Eigen::Matrix<T, 3, 1>& e_g = robotState_->getGravityAxis();
 
       for (size_t j = 0; j < Nleg; j++) {
         piD_[j] = deltaFrequency[j] + baseFreq_; 
@@ -104,6 +104,6 @@ class FootMotionGenerator {
     Eigen::Matrix<T, Nleg, 1> pi_;
     Eigen::Matrix<T, Nleg, 1> piD_;
     const Eigen::Matrix<T, Nleg*3, 1>& footPositionOffset_;
-    const State<T>& robotState_;
+    const State<T>* robotState_;
 }; // end of class FootMotionGenerator
 

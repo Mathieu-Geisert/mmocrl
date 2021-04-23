@@ -38,7 +38,7 @@ template<typename T>//, int Nlimb>
 class Command {
 public:
   //Command(const State<T>& state, const terrain::Terrain<T, Nlimb>& terrain,  RandomNumberGenerator<T>& rn)
-  Command(const State<T>& state,  RandomNumberGenerator<T>& rn)
+  Command(const State<T>* state,  RandomNumberGenerator<T>* rn)
   : state_(state), 
     //terrain_(terrain),
     rn_(rn)
@@ -55,14 +55,14 @@ public:
       return;
     }
     //if (command_.head(2).norm() != 0.0) {
-      Eigen::Matrix<T, 3, 1> bodyPos = state_.getBasePos();
+      Eigen::Matrix<T, 3, 1> bodyPos = state_->getBasePos();
       T x_dist = goalPosition_[0] - bodyPos[0];
       T y_dist = goalPosition_[1] - bodyPos[1];
       if (std::sqrt(x_dist * x_dist + y_dist * y_dist) < 0.5) {
         sampleGoal();
       }
       T commandDirection = std::atan2(y_dist, x_dist);
-      const T& headingAngle = state_.getHeadingAngle();
+      const T& headingAngle = state_->getHeadingAngle();
       T commandDirection_bodyframe = commandDirection - headingAngle;
       commandDirection_bodyframe = Math::MathFunc::anglemod(commandDirection_bodyframe);
       command_[0] = std::cos(commandDirection_bodyframe);
@@ -82,18 +82,18 @@ public:
 //    goalPosition_[1] = q_[1];
 //
 //    if (terrainType_ == TerrainType::Stairs) {
-//      goalPosition_[0] += terrainProp_.xSize * 0.1 * rn_.sampleUniform();
+//      goalPosition_[0] += terrainProp_.xSize * 0.1 * rn_->sampleUniform();
 //      if (q_[1] < 0.3) {
-//        goalPosition_[1] = terrainProp_.ySize * (0.3 + 0.2 * rn_.sampleUniform01());
+//        goalPosition_[1] = terrainProp_.ySize * (0.3 + 0.2 * rn_->sampleUniform01());
 //      } else {
-//        goalPosition_[1] = -terrainProp_.ySize * (0.3 + 0.2 * rn_.sampleUniform01());
+//        goalPosition_[1] = -terrainProp_.ySize * (0.3 + 0.2 * rn_->sampleUniform01());
 //      }
 //    } else {
-//      goalPosition_[0] += terrainProp_.xSize * 0.4 * rn_.sampleUniform();
-//      goalPosition_[1] += terrainProp_.ySize * 0.4 * rn_.sampleUniform();
+//      goalPosition_[0] += terrainProp_.xSize * 0.4 * rn_->sampleUniform();
+//      goalPosition_[1] += terrainProp_.ySize * 0.4 * rn_->sampleUniform();
 //
 //      if (commandMode_ == CommandMode::STRAIGHT) {
-//        goalPosition_[0] = q_[0] + terrainProp_.xSize * 0.1 * rn_.sampleUniform();
+//        goalPosition_[0] = q_[0] + terrainProp_.xSize * 0.1 * rn_->sampleUniform();
 //        goalPosition_[1] = q_[1] + terrainProp_.ySize * 0.4;
 //      }
 //    }
@@ -119,10 +119,10 @@ public:
       return;
     }
     sampleGoal();
-    Eigen::Matrix<T, 3, 1> bodyPos = state_.getBasePos();
+    Eigen::Matrix<T, 3, 1> bodyPos = state_->getBasePos();
     double commandDirection = std::atan2(goalPosition_[1] - bodyPos[1], goalPosition_[0] - bodyPos[0]);
 
-    double headingAngle = state_.getHeadingAngle();
+    double headingAngle = state_->getHeadingAngle();
     double commandDirection_bodyframe = commandDirection - headingAngle;
     commandDirection_bodyframe = Math::MathFunc::anglemod(commandDirection_bodyframe);
 
@@ -131,15 +131,15 @@ public:
     command_[2] = 0.0;
 
 //    if (commandMode_ != CommandMode::STRAIGHT) {
-//      command_[2] = 1.0 - 2.0 * rn_.intRand(0, 1);
-//      command_[2] *= rn_.sampleUniform01();
-//      if ((commandMode_ != CommandMode::NOZERO) && (rn_.sampleUniform01() > 0.8)) {
+//      command_[2] = 1.0 - 2.0 * rn_->intRand(0, 1);
+//      command_[2] *= rn_->sampleUniform01();
+//      if ((commandMode_ != CommandMode::NOZERO) && (rn_->sampleUniform01() > 0.8)) {
 //        command_.head(2).setZero();
 //      }
 //    }
 
 //    if (terrainType_ == TerrainType::Stairs) {
-//      if (rn_.sampleUniform01() < 0.5) {
+//      if (rn_->sampleUniform01() < 0.5) {
 //        command_[2] = 0.0;
 //      }
 //    }
@@ -154,9 +154,9 @@ public:
   void setGoalPosition(const Eigen::Matrix<T, 3, 1>& goalPosition) { goalPosition_ = goalPosition; }
 
 protected:
-  const State<T>& state_;
+  const State<T>* state_;
   //const terrain::Terrain<T, Nlimb>& terrain_;
-  RandomNumberGenerator<T>& rn_;
+  RandomNumberGenerator<T>* rn_;
 
   CommandMode commandMode_;
   Eigen::Matrix<T, 3, 1> command_;
