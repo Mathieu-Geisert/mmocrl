@@ -127,7 +127,7 @@ class VectorizedEnvironment {
 
   const std::vector<std::map<std::string, float>>& getRewardInfo() { return rewardInformation_; }
 
- private:
+ protected:
 
   inline void perAgentStep(int agentId,
                            Eigen::Ref<EigenRowMajorMat> &action,

@@ -46,8 +46,8 @@ class Terrain {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   public:
-    Terrain(raisim::World* world, const ModelParametersBase<T, Nlimb>& modelParameters, RandomNumberGenerator<T>& rn, double xSize=10., double ySize=10.)
-     : world_(world), terrainGenerator_(), footNames_(modelParameters.getFootNames()), rn_(rn)
+    Terrain(raisim::World* world, const ModelParametersBase<T, Nlimb>* modelParameters, RandomNumberGenerator<T>* rn, double xSize=5., double ySize=5.)
+     : world_(world), terrainGenerator_(), footNames_(modelParameters->getFootNames()), rn_(rn)
     {
       terrainProp_.xSize = xSize;
       terrainProp_.ySize = ySize;
@@ -122,12 +122,21 @@ class Terrain {
 
   const Eigen::Matrix<T, Nlimb, 1>& getFootFriction() const { return footFriction_; }
 
+<<<<<<< Updated upstream
   void setRandomFriction(double low, double mid) {
     for (int i = 0; i < 4; i++) {
       footFriction_[i] = std::max(mid + 0.1 * rn_.sampleNormal(), low);
       world_->setMaterialPairProp("terrain", footNames_[i], footFriction_[i], 0.0, 0.0);
     }
     world_->setDefaultMaterial(0.1 + rn_.sampleUniform01() * 0.4, 0.0, 0.0);
+=======
+  void setRandomFriction(double mean, double std) {
+    for (int i = 0; i < 4; i++) {
+      footFriction_[i] = std::max(mean + std * rn_->sampleNormal(), 0.1);
+      world_->setMaterialPairProp("terrain", footNames_[i], footFriction_[i], 0.0, 0.0);
+    }
+    world_->setDefaultMaterial(0.1 + rn_->sampleUniform01() * 0.4, 0.0, 0.0);
+>>>>>>> Stashed changes
   }
   
 

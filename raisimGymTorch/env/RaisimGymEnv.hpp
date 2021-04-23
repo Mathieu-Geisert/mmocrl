@@ -47,6 +47,8 @@ class RaisimGymEnv {
 
   /////// optional methods ///////
   virtual void curriculumUpdate() {};
+  virtual void updateTerrain(TerrainType type, Eigen::Vector<Dtype, 3, 1>) {};
+  virtual float getTraversability() {return 0.f};
   virtual void close() { if(server_) server_->killServer(); };
   virtual void setSeed(int seed) {};
   ////////////////////////////////

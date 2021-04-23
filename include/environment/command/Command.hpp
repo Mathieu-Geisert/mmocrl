@@ -102,8 +102,8 @@ public:
 //    goalPosition_[0] = std::max(-0.5 * terrainProp_.xSize + 1.0, goalPosition_[0]);
 //    goalPosition_[1] = std::min(0.5 * terrainProp_.ySize - 1.0, goalPosition_[1]);
 //    goalPosition_[1] = std::max(-0.5 * terrainProp_.ySize + 1.0, goalPosition_[1]);
-    goalPosition_[0] = 5. * rn_.sampleUniform();
-    goalPosition_[1] = 5. * rn_.sampleUniform();
+    goalPosition_[0] = 2. * rn_->sampleUniform();
+    goalPosition_[1] = 2. * rn_->sampleUniform();
   }
 
   void sampleCommand() {
