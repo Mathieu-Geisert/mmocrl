@@ -38,7 +38,7 @@ enum TerrainType {
   Other
 };
 
-constexpr const double PixelSize = 0.02;
+constexpr const double PixelSize = 0.05;//0.02;
 
 template<typename T, int Nlimb>
 class Terrain {
@@ -46,7 +46,7 @@ class Terrain {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   public:
-    Terrain(raisim::World* world, const ModelParametersBase<T, Nlimb>* modelParameters, RandomNumberGenerator<T>* rn, double xSize=5., double ySize=5.)
+    Terrain(raisim::World* world, const ModelParametersBase<T, Nlimb>* modelParameters, RandomNumberGenerator<T>* rn, double xSize=6., double ySize=6.)
      : world_(world), terrainGenerator_(), footNames_(modelParameters->getFootNames()), rn_(rn)
     {
       terrainProp_.xSize = xSize;
@@ -80,8 +80,7 @@ class Terrain {
     if (terrainType_ == TerrainType::Flat) {
       terrainNormal.setZero();
       terrainNormal[2] = 1.0;
-    }
-    else {
+    } else {
       Eigen::Matrix<double, 3, 1> a1;
       Eigen::Matrix<double, 3, 1> a2;
       a1[0] = 2.0 * delta;
@@ -127,10 +126,10 @@ class Terrain {
       footFriction_[i] = std::max(mean + std * rn_->sampleNormal(), 0.1);
       world_->setMaterialPairProp("terrain", footNames_[i], footFriction_[i], 0.0, 0.0);
     }
-    world_->setDefaultMaterial(0.1 + rn_->sampleUniform01() * 0.4, 0.0, 0.0);
+    world_->setDefaultMaterial(0.9, 0.0, 0.0);//0.1 + rn_->sampleUniform01() * 0.4, 0.0, 0.0);
   }
 
-  void generateTerrain(TerrainType terrainType, Eigen::Matrix<double, 3, 1> &params)
+  void generateTerrain(TerrainType terrainType, const Eigen::Matrix<double, 3, 1> &params)
   {
     if (terrainType_ != TerrainType::Flat)
       world_->removeObject(terrain_);
@@ -168,12 +167,13 @@ class Terrain {
 
     if (terrainType_ != TerrainType::Flat) {
       switch (terrainType_) { 
-        case TerrainType::Hills: std::cout << "Generate Hills" << std::endl;        generateTerrainHills(params); break;
-        case TerrainType::Steps:  std::cout << "Generate Steps" << std::endl;       generateTerrainSteps(params); break;
-        case TerrainType::Stairs:  std::cout << "Generate Stairs" << std::endl;      generateTerrainStairs(params); break;
-        case TerrainType::SingleStep:  std::cout << "Generate SingleStep" << std::endl;  generateTerrainSingleStep(params); break;
-        case TerrainType::UniformSlope:  std::cout << "Generate Slope" << std::endl;generateTerrainUniformSlope(params); break;
-        case TerrainType::Other:     std::cout << "Generate Other" << std::endl;    generateTerrainOther(params); break;
+        case TerrainType::Hills: //sd::cout << "Generate Hills: " << params.transpose() << std::endl;
+                                 generateTerrainHills(params); break;
+        case TerrainType::Steps:  std::cout << "Generate Steps: " << params.transpose() << std::endl;       generateTerrainSteps(params); break;
+        case TerrainType::Stairs:  std::cout << "Generate Stairs: " << params.transpose() << std::endl;      generateTerrainStairs(params); break;
+        case TerrainType::SingleStep:  std::cout << "Generate SingleStep: " << params.transpose() << std::endl;  generateTerrainSingleStep(params); break;
+        case TerrainType::UniformSlope:  std::cout << "Generate Slope: " << params.transpose() << std::endl;generateTerrainUniformSlope(params); break;
+        case TerrainType::Other:     std::cout << "Generate Other: " << params.transpose() << std::endl;    generateTerrainOther(params); break;
         default: throw std::runtime_error("Terrain not defined!");
       }
       terrain_ = world_->addHeightMap(terrainProp_.xSamples,
@@ -186,7 +186,7 @@ class Terrain {
     }    
   }
 
-  void generateTerrainStairs(Eigen::Matrix<double, 3, 1> &params)
+  void generateTerrainStairs(const Eigen::Matrix<double, 3, 1>& params)
   {
     //TODO: Why stepLengh/Height does not directly correspond to input params???
     double stepLength = params[1] + 0.1;
@@ -241,7 +241,7 @@ class Terrain {
     }
   }
 
-  void generateTerrainSteps(Eigen::Matrix<double, 3, 1> &params)
+  void generateTerrainSteps(const Eigen::Matrix<double, 3, 1>& params)
   {
     //TODO: Why stepLengh/Height does not directly correspond to input params???
     double stepSize = params[1] + 0.2;
@@ -267,7 +267,7 @@ class Terrain {
   }
    
    
-  void generateTerrainSingleStep(Eigen::Matrix<double, 3, 1> &params)
+  void generateTerrainSingleStep(const Eigen::Matrix<double, 3, 1>& params)
   {
     //TODO: Why stepLengh/Height does not directly correspond to input params???
     double stepHeight = params[0] + 0.5;
@@ -290,7 +290,7 @@ class Terrain {
     }
   }
  
-  void generateTerrainHills(Eigen::Matrix<double, 3, 1> &params)
+  void generateTerrainHills(const Eigen::Matrix<double, 3, 1>& params)
   {
     //TODO: manage param.
     terrainProp_.frequency = params[1]; ///
@@ -305,21 +305,26 @@ class Terrain {
     terrainGenerator_.getTerrainProp() = terrainProp_;
 
     heights_ = terrainGenerator_.generatePerlinFractalTerrain();
+
+    double min = 10000.;
     for (size_t i = 0; i < heights_.size(); i++) {
-      heights_[i] += 1.0;
+      if( heights_[i] < min ) { min = heights_[i]; }
+    }
+    for (size_t i = 0; i < heights_.size(); i++) {
+      heights_[i] += min;
     }
 
     Eigen::Map<Eigen::Matrix<double, -1, -1>> mapMat(heights_.data(),
                                                      terrainProp_.xSamples,
                                                      terrainProp_.ySamples);
-    mapMat *= params[2] + 0.2;
+    mapMat *= params[2];
 
     for (size_t idx = 0; idx < heights_.size(); idx++) {
       heights_[idx] += (params[0]) * rn_->sampleUniform01();
     }
   }
 
-  void generateTerrainUniformSlope(Eigen::Matrix<double, 3, 1> &params)
+  void generateTerrainUniformSlope(const Eigen::Matrix<double, 3, 1>& params)
   {
     ///temp
     double hills = params[0];
@@ -334,7 +339,7 @@ class Terrain {
   } 
   
   
-  void generateTerrainOther(Eigen::Matrix<double, 3, 1> &params)
+  void generateTerrainOther(const Eigen::Matrix<double, 3, 1>& params)
   {
     //TODO:adjust params.
     double stepSize = params[0] + 0.2;

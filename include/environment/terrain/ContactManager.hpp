@@ -47,6 +47,8 @@ public:
     for (int i=0; i<Nlimb; i++) {
       footPosInShankFrame_[i] = anymal_->getCollisionBodies()[4 * i + 4].posOffset;
     }
+      updateFootHeightWrtLocalTerrain();
+      updateContacts();
   } 
 
   ~ContactManager() = default;

@@ -87,6 +87,9 @@ class RaisimGymVecEnv:
     def curriculum_callback(self):
         self.wrapper.curriculumUpdate()
 
+    def updateTerrains(self):
+        self.wrapper.updateTerrains()
+
     @property
     def num_envs(self):
         return self.wrapper.getNumOfEnvs()

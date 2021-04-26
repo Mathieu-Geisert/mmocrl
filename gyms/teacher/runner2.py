@@ -55,15 +55,21 @@ wandb.save(task_path + "/Environment.hpp")
 #    wandb.config['training']['n_epoch'] = wandb.config['n_epoch']
 
 class SaverCallback(BaseCallback):
-    def __init__(self, env, model, data_dir, freq=10000000, verbose=False):
+    def __init__(self, env, model, data_dir, freq=1000000, verbose=False):
         super(SaverCallback, self).__init__(verbose)
         self.env = env
         self.freq = freq
         self.data_dir = data_dir
-        self.vis = False
+        self.vis = True
+        self.env.turn_on_visualization()
         self.model = model
 
     def _on_step(self):
+
+        if self.n_calls % (400*4) == 0:
+            print("update terrains...")
+            self.env.updateTerrains()
+
         rewards = env.wrapper.rewardInfo()
         rewardMean = rewards[0]
 
@@ -87,8 +93,8 @@ class SaverCallback(BaseCallback):
             self.env.turn_off_visualization()
             self.env.stop_video_recording()
 
-        if self.vis == True:
-            time.sleep(0.01)
+        #if self.vis == True:
+        #    time.sleep(0.01)
 
         return True
 

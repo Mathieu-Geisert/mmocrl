@@ -85,6 +85,19 @@ class ENVIRONMENT : public RaisimGymEnv {
 
   void init() final { }
 
+  void updateTerrain(const Eigen::Matrix<float, 3, 1>& parameters) {
+    //std::cout << "generate terrain! " << std::endl;
+    terrain_->generateTerrain(TerrainType::Hills, parameters.template cast<double>());
+    terrain_->setRandomFriction(0.9, 0.02);
+    it_terrain_ = 0;
+    it_traversability_ = 0;
+    reset();
+  }
+
+  float getTraversability() {
+    return float(it_traversability_)/float(it_terrain_);
+  }
+
   void reset() final {
     gc_init_[2] = terrain_->getHeight(gc_init_[0], gc_init_[1]) + 0.5;
     anymal_->setState(gc_init_, gv_init_);
@@ -142,7 +155,9 @@ class ENVIRONMENT : public RaisimGymEnv {
       r_lv = exp(-2.0*pow(v_pr - 0.6, 2));
     rewards_.record("r_lv", r_lv);
 
-    if (v_pr > 0.45) { P_traversability_++; } 
+    if (v_pr > 0.2) { it_traversability_++; }
+    it_terrain_++;
+
 //    if(visualize_) {
 //      it_++;
 //      if (it_ % 10 == 0) { 
@@ -197,49 +212,18 @@ class ENVIRONMENT : public RaisimGymEnv {
     //Torque
     rewards_.record("r_t", - anymal_->getGeneralizedForce().e().tail(12).squaredNorm());
     if(visualize_) {
-      std::cout << "reward: " << rewards_.sum() 
-        << "- r_lv: " << r_lv 
-        << " - r_av: " << r_av 
-        << " - r_b: " << v_0 + w 
-        << " - r_fc: " << r_fc 
-        << " - r_s: " << -smoothing.norm()
-        << " - r_t: " << -anymal_->getGeneralizedForce().e().tail(12).squaredNorm()
-        << std::endl;
+     // std::cout << "reward: " << rewards_.sum() 
+     //   << "- r_lv: " << r_lv 
+     //   << " - r_av: " << r_av 
+     //   << " - r_b: " << v_0 + w 
+     //   << " - r_fc: " << r_fc 
+     //   << " - r_s: " << -smoothing.norm()
+     //   << " - r_t: " << -anymal_->getGeneralizedForce().e().tail(12).squaredNorm()
+     //   << std::endl;
       //usleep(100000);
-    }
-
-    it_++;
-    if (it_ > 1000) {
-      double traversability = double(P_traversability_) / double(it_);
-      if (terrain_->getTerrainType() == TerrainType::Flat) {
-        if (traversability > 0.95) {
-          generateTerrainHills();
-        }
-//        if (traversability > 0.4) {
-//          terrain_->setRandomFriction(0.2, 0.5);
-//        }
-      }
-      else {
-        if (traversability < 0.4 || traversability > 0.9) {
-          generateTerrainHills();
-        }
-      }
-      it_ = 0;
-      P_traversability_ = 0;
     }
     
     return rewards_.sum();
-  }
-
-  void generateTerrainHills() {
-    Eigen::Vector3d terrain_params;
-    terrain_params[0] = rn_->sampleUniform01() * 0.05;
-    terrain_params[1] = rn_->sampleUniform01() * 0.8 + 0.2;
-    terrain_params[2] = rn_->sampleUniform01() * 2.8 + 0.2; 
-    terrain_->generateTerrain(TerrainType::Hills, terrain_params);
-    gc_init_[2] = terrain_->getHeight(gc_init_[0], gc_init_[1]) + 0.5;
-    anymal_->setState(gc_init_, gv_init_);
-//  terrain_->setRandomFriction(0.2, 0.5);
   }
 
   void observe(Eigen::Ref<EigenVec> ob) final {
@@ -300,8 +284,8 @@ class ENVIRONMENT : public RaisimGymEnv {
   double terminalRewardCoeff_ = -1.;
   //raisim::Reward rewards_;
   bool badlyConditioned_ = false;
-  int it_ = 0;
-  int P_traversability_ = 0;
+  int it_terrain_ = 0;
+  int it_traversability_ = 0;
   bool visualize_ = false;
 };
 }

@@ -109,6 +109,9 @@ class RaisimSbGymVecEnv(VecEnv):
 
     def curriculum_callback(self):
         self.wrapper.curriculumUpdate()
+    
+    def updateTerrains(self):
+        self.wrapper.updateTerrains()
 
     def render(self, mode='human'):
         pass

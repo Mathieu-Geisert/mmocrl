@@ -38,6 +38,10 @@ class VectorizedEnvironment {
     omp_set_num_threads(cfg_["num_threads"].template As<int>());
     num_envs_ = cfg_["num_envs"].template As<int>();
 
+    std::cout << "----------------------------------------------- Init VecEnv ----------------------------------------------- " << std::endl;
+    for (auto *ptr: environments_) {
+      delete ptr;
+    }
     environments_.clear();
     rewardInformation_.clear();
     environments_.reserve(num_envs_);
