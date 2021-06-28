@@ -59,6 +59,8 @@ class SaverCallback(BaseCallback):
         self.data_dir = data_dir
         self.vis = False
         self.model = model
+        self.time_train = time.perf_counter()
+        self.time_sim = time.perf_counter()
 
     def _on_step(self):
         rewards = env.wrapper.rewardInfo()
@@ -88,6 +90,16 @@ class SaverCallback(BaseCallback):
             time.sleep(0.01)
 
         return True
+
+    def _on_rollout_start(self):
+        self.time_sim = time.perf_counter()
+
+    def _on_rollout_end(self):
+        print("Simulation time:",time.perf_counter() - self.time_sim)
+        self.time_train = time.perf_counter()
+
+    def _on_training_end(self):
+        print("Training time:", time.perf_counter() - self.time_train) 
 
 # create environment from the configuration file
 env = VecEnv(RaisimGymEnv(rsc_path, dump(wandb.config['environment'], Dumper=RoundTripDumper)), wandb.config['environment'])
