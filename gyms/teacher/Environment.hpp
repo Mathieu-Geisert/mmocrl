@@ -85,10 +85,10 @@ class ENVIRONMENT : public RaisimGymEnv {
 
   void init() final { }
 
-  void updateTerrain(const Eigen::Matrix<float, 3, 1>& parameters) {
+  void updateTerrain(const TerrainType& terrainType, const Eigen::Matrix<float, 3, 1>& parameters, const Eigen::Matrix<float, 2, 1>& friction) {
     //std::cout << "generate terrain! " << std::endl;
-    terrain_->generateTerrain(TerrainType::Hills, parameters.template cast<double>());
-    terrain_->setRandomFriction(0.9, 0.02);
+    terrain_->generateTerrain(terrainType, parameters.template cast<double>());
+    terrain_->setRandomFriction(friction[0], friction[1]);
     it_terrain_ = 0;
     it_traversability_ = 0;
     reset();

@@ -36,7 +36,7 @@ saver = ConfigurationSaver(log_dir=home_path + "/data/teacherFlat",
 cfg = YAML().load(open(task_path + "/cfg.yaml", 'r'))
 
 #wandb.init(project='mmocrl_flat_teacher', entity='mgeisert', sync_tensorboard=True, config=cfg)
-wandb.init(project='mmocrl_desktop_test_fps', entity='mgeisert', sync_tensorboard=True, config=cfg)
+wandb.init(project='mmocrl_terrains', entity='mgeisert', sync_tensorboard=True, config=cfg)
 wandb.save(task_path + "/cfg.yaml")
 wandb.save(task_path + "/Environment.hpp")
 
@@ -55,7 +55,7 @@ wandb.save(task_path + "/Environment.hpp")
 #    wandb.config['training']['n_epoch'] = wandb.config['n_epoch']
 
 class SaverCallback(BaseCallback):
-    def __init__(self, env, model, data_dir, freq=1000000, verbose=False):
+    def __init__(self, env, model, data_dir, freq=10000000, verbose=False):
         super(SaverCallback, self).__init__(verbose)
         self.env = env
         self.freq = freq
@@ -85,13 +85,13 @@ class SaverCallback(BaseCallback):
         if self.n_calls*env.num_envs % self.freq == 0:
             self.vis = True
             self.env.turn_on_visualization()
-            self.env.start_video_recording(self.data_dir + "/" + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "policy_"+str(self.n_calls*self.env.num_envs)+'.mp4')
+            #self.env.start_video_recording(self.data_dir + "/" + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "policy_"+str(self.n_calls*self.env.num_envs)+'.mp4')
             model.save(self.data_dir + "/" + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "policy_"+str(self.n_calls*self.env.num_envs))
         
         if self.n_calls*env.num_envs % self.freq == env.num_envs * 800 and self.vis == True:
             self.vis = False
             self.env.turn_off_visualization()
-            self.env.stop_video_recording()
+            #self.env.stop_video_recording()
 
         #if self.vis == True:
         #    time.sleep(0.01)

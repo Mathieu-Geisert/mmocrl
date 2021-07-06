@@ -167,13 +167,12 @@ class Terrain {
 
     if (terrainType_ != TerrainType::Flat) {
       switch (terrainType_) { 
-        case TerrainType::Hills: //sd::cout << "Generate Hills: " << params.transpose() << std::endl;
-                                 generateTerrainHills(params); break;
-        case TerrainType::Steps:  std::cout << "Generate Steps: " << params.transpose() << std::endl;       generateTerrainSteps(params); break;
-        case TerrainType::Stairs:  std::cout << "Generate Stairs: " << params.transpose() << std::endl;      generateTerrainStairs(params); break;
-        case TerrainType::SingleStep:  std::cout << "Generate SingleStep: " << params.transpose() << std::endl;  generateTerrainSingleStep(params); break;
-        case TerrainType::UniformSlope:  std::cout << "Generate Slope: " << params.transpose() << std::endl;generateTerrainUniformSlope(params); break;
-        case TerrainType::Other:     std::cout << "Generate Other: " << params.transpose() << std::endl;    generateTerrainOther(params); break;
+        case TerrainType::Hills: generateTerrainHills(params); break;
+        case TerrainType::Steps: generateTerrainSteps(params); break;
+        case TerrainType::Stairs: generateTerrainStairs(params); break;
+        case TerrainType::SingleStep: generateTerrainSingleStep(params); break;
+        case TerrainType::UniformSlope: generateTerrainUniformSlope(params); break;
+        case TerrainType::Other: generateTerrainOther(params); break;
         default: throw std::runtime_error("Terrain not defined!");
       }
       terrain_ = world_->addHeightMap(terrainProp_.xSamples,
@@ -189,8 +188,8 @@ class Terrain {
   void generateTerrainStairs(const Eigen::Matrix<double, 3, 1>& params)
   {
     //TODO: Why stepLengh/Height does not directly correspond to input params???
-    double stepLength = params[1] + 0.1;
-    double stepHeight = params[2] + 0.05;
+    double stepLength = 0.6 - params[1];
+    double stepHeight = params[2];
 
     int N = (int) (stepLength / PixelSize);
     int mid0 = 0.5 * terrainProp_.ySamples - (int) (0.5 / PixelSize);
@@ -244,8 +243,8 @@ class Terrain {
   void generateTerrainSteps(const Eigen::Matrix<double, 3, 1>& params)
   {
     //TODO: Why stepLengh/Height does not directly correspond to input params???
-    double stepSize = params[1] + 0.2;
-    double stepHeight = params[2] + 0.05;
+    double stepSize = 0.6 - params[1];
+    double stepHeight = params[2];
 
     int xNum = terrainProp_.xSize / stepSize;
     int yNum = terrainProp_.ySize / stepSize;
