@@ -55,7 +55,7 @@ wandb.save(task_path + "/Environment.hpp")
 #    wandb.config['training']['n_epoch'] = wandb.config['n_epoch']
 
 class SaverCallback(BaseCallback):
-    def __init__(self, env, model, data_dir, freq=10000000, verbose=False):
+    def __init__(self, env, model, data_dir, freq=1000000, verbose=False):
         super(SaverCallback, self).__init__(verbose)
         self.env = env
         self.freq = freq

@@ -41,7 +41,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     rn_ = std::make_shared<RandomNumberGenerator<float>>();
     disturbance_ = std::make_shared<PushDisturbance<float>>(anymal_, rn_.get());
     c100Params_ = std::make_shared<ModelParametersAnymalC100<float>>();
-    robotState_ = std::make_shared<State<float>>(anymal_);
+    robotState_ = std::make_shared<NoisyState<float>>(anymal_, rn_.get()); //std::make_shared<State<float>>(anymal_);
     terrain_ = std::make_shared<Terrain<float, 4>>(world_.get(), c100Params_.get(), rn_.get());
     command_ = std::make_shared<Command<float>>(robotState_.get(), rn_.get());
     contact_ = std::make_shared<ContactManager<float, 4>>(anymal_, robotState_.get(), terrain_.get(), simulation_dt_);

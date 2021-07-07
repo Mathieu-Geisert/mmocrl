@@ -23,7 +23,7 @@
 #include "common/message_macros.hpp"
 #include "environment/terrain/ContactManager.hpp"
 
-constexpr double Size = 0.15;
+constexpr double Size = 0.05;
 
 template<typename T, int Nlimb>
 class LocalTerrainViewer {
