@@ -7,7 +7,7 @@ import numpy as np
 import platform
 import os
 import gym.spaces.space
-from stable_baselines3.common.vec_env.base_vec_env import VecEnv, VecEnvIndices, Any
+from stable_baselines3.common.vec_env.base_vec_env import VecEnv#, Any
 
 
 class RaisimSbGymVecEnv(VecEnv):
@@ -58,13 +58,13 @@ class RaisimSbGymVecEnv(VecEnv):
         self.wrapper.step(self.actions, self._reward, self._done)
         return self.observe(True), self._reward.copy(), self._done.copy(), []
 
-    def env_method(self, method_name: str, *method_args, indices: VecEnvIndices = None, **method_kwargs):
+    def env_method(self, method_name: str, *method_args, indices = None, **method_kwargs):
         pass
 
-    def get_attr(self, attr_name: str, indices: VecEnvIndices = None):
+    def get_attr(self, attr_name: str, indices = None):
         pass
 
-    def set_attr(self, attr_name: str, value: Any, indices: VecEnvIndices = None):
+    def set_attr(self, attr_name: str, value, indices = None):
         pass
 
     def load_scaling(self, dir_name, iteration, count=1e5):
