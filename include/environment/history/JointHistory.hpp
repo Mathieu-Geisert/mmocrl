@@ -64,6 +64,14 @@ class JointHistory {
       //std::cout << "currentBufferPosition: " << currentBufferPosition_  << " -- iter: " << iter << " -- getPositionInBuffer: " << getPositionInBuffer(iter) << std::endl;
       return jointHist_.segment(getPositionInBuffer(iter), nJoint);
     }
+
+//    const Eigen::Matrix<T, nJoint * jointHistoryLength, 1>& getHistory()
+//    {
+//      Eigen::Matrix<T, njoint * jointHistoryLength, 1> obs;
+//      //reorder obs
+//      obs.head(currentBufferPosition_) = V
+//      return obs;
+//    }
     
     void appendValue(const Eigen::Matrix<T, -1, 1>& jointValue)
     {

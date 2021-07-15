@@ -64,6 +64,12 @@ target_link_libraries(test_internal_observation
         ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
 target_compile_options(test_internal_observation PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
 
+add_executable(test_history_observation
+        test/test_history_observation.cpp)
+target_link_libraries(test_history_observation
+        ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
+target_compile_options(test_history_observation PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
+
 add_executable(test_rewards
         test/test_rewards.cpp)
 target_link_libraries(test_rewards

@@ -1,0 +1,19 @@
+program: gyms/teacher/runner2.py
+method: bayes
+metric:
+  name: time/fps
+  goal: maximize
+parameters:
+  num_envs:
+    min: 100
+    max: 3000
+  num_threads:
+    min: 8
+    max: 64
+    #  n_batch:
+    #    min: 4
+    #max: 200
+    #n_epoch:
+    # min: 1
+    # max: 10
+  

@@ -27,7 +27,6 @@
 #include "environment/scaling/ScalingAndOffset.hpp"
 #include "environment/command/Command.hpp"
 
-//TODO: Add command.
 //TODO: avoid hardcoding control_dt/simulation_dt for jointTargethistory.
 
 template<typename T, int Nlimb>
