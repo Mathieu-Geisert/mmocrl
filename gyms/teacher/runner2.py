@@ -36,7 +36,7 @@ saver = ConfigurationSaver(log_dir=home_path + "/data/teacherFlat",
 cfg = YAML().load(open(task_path + "/cfg.yaml", 'r'))
 
 #wandb.init(project='mmocrl_flat_teacher', entity='mgeisert', sync_tensorboard=True, config=cfg)
-wandb.init(project='mmocrl_terrains', entity='mgeisert', sync_tensorboard=True, config=cfg)
+wandb.init(project='mmocrl_terrains', entity='neotriple', sync_tensorboard=True, config=cfg)
 wandb.save(task_path + "/cfg.yaml")
 wandb.save(task_path + "/Environment.hpp")
 

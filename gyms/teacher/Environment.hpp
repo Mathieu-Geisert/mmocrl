@@ -34,7 +34,7 @@ class ENVIRONMENT : public RaisimGymEnv {
       RaisimGymEnv(resourceDir, cfg), visualizable_(visualizable) {
 
     /// add objects
-    anymal_ = world_->addArticulatedSystem(resourceDir_+"/robot/c100/urdf/anymal_minimal.urdf");
+    anymal_ = world_->addArticulatedSystem(resourceDir_+"/robot/a1/urdf/a1.urdf");
     anymal_->setName("anymal");
     world_->setTimeStep(simulation_dt_);//0.0025);
 
