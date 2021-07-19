@@ -115,6 +115,10 @@ class InverseKinematics {
     const T qHAA = beta + delta - M_PI_2;
     legJoints[0] = qHAA;
 
+    // if (limb > 2) {
+    //   legJoints[0] += delta;
+    // }
+
 
     ///simplification for anymal
     const T l_squared = (rSquared + positionHAAToFootInBaseFrame[0] * positionHAAToFootInBaseFrame[0]);
@@ -123,7 +127,7 @@ class InverseKinematics {
 
     T qKFE = phi1 + phi2 - KFEOffset_;
 
-    if (limb < 2) {
+    if (limb < 5) {
       qKFE *= -1.0;
     }
     legJoints[2] = qKFE;
@@ -131,9 +135,9 @@ class InverseKinematics {
     T theta_prime = atan2(positionHAAToFootInBaseFrame[0], r);
     T qHFE = phi1 - theta_prime;
 
-    if (limb > 1) {
-      qHFE = -phi1 - theta_prime;
-    }
+    // if (limb > 1) {
+    //   qHFE = -phi1 - theta_prime;
+    // }
     legJoints[1] = qHFE;
     return true;
   }

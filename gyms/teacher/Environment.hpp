@@ -12,6 +12,7 @@
 #include <cmath>
 #include "environment/terrain/Terrain.hpp"
 #include "environment/motion/ModelParametersAnymalC100.hpp"
+#include "environment/motion/ModelParametersA1.hpp"
 #include "environment/motion/FootMotionGenerator.hpp"
 #include "environment/actuator/ActuatorModelPNetwork.hpp"
 #include "environment/motion/IK.hpp"
@@ -34,7 +35,7 @@ class ENVIRONMENT : public RaisimGymEnv {
       RaisimGymEnv(resourceDir, cfg), visualizable_(visualizable) {
 
     /// add objects
-    anymal_ = world_->addArticulatedSystem(resourceDir_+"/robot/a1/urdf/a1.urdf");
+    anymal_ = world_->addArticulatedSystem(resourceDir_+"/robot/c100/urdf/anymal_minimal.urdf");
     anymal_->setName("anymal");
     world_->setTimeStep(simulation_dt_);//0.0025);
 
@@ -54,7 +55,7 @@ class ENVIRONMENT : public RaisimGymEnv {
     stateScaling_ = std::make_shared<ScalingAndOffset<float>>(resourceDir_+"/scaling/state.yaml");
     actionScaling_ = std::make_shared<ScalingAndOffset<float>>(resourceDir_+"/scaling/action.yaml");
 
-    /// this is nominal configuration of anymal
+    /// this is nominal configuration of a1
     gc_init_ << 0, 0, 0.50, 1.0, 0.0, 0.0, 0.0, 0.03, 0.4, -0.8, -0.03, 0.4, -0.8, 0.03, -0.4, 0.8, -0.03, -0.4, 0.8;
     gv_init_.setZero();
 

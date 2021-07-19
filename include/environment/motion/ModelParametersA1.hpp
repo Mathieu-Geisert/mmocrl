@@ -8,46 +8,46 @@
 #include "environment/motion/ModelParametersBase.hpp"
 
 template<typename T>
-class ModelParametersAnymalC100 : public ModelParametersBase<T, 4> {
+class ModelParametersA1 : public ModelParametersBase<T, 4> {
 
   public:
-    ModelParametersAnymalC100()
+    ModelParametersA1()
       : ModelParametersBase<T,4>()
     {
-      this->referenceHight_ = -0.28;
-      this->referenceFootPositionOffset_ << 0.3 + 0.1, 0.2, this->referenceHight_,
-                                            0.3 + 0.1, -0.2, this->referenceHight_,
-                                            -0.3 - 0.1, 0.2, this->referenceHight_,
-                                            -0.3 - 0.1, -0.2, this->referenceHight_;
-      this->referenceJointConfiguration_ << -0.138589, 0.480936, -0.761428,
-                                       0.138589, 0.480936, -0.761428,
-                                       -0.138589, -0.480936, 0.761428,
-                                       0.138589, -0.480936,  0.761428;
+      this->referenceHight_ = -0.27;
+      this->referenceFootPositionOffset_ << 0.1805 + 0.025, 0.12, this->referenceHight_,
+                                            0.1805 + 0.025, -0.12, this->referenceHight_,
+                                            -0.1805 - 0.025, 0.12, this->referenceHight_,
+                                            -0.1805 - 0.025, -0.12, this->referenceHight_;
+      this->referenceJointConfiguration_ << -0.0, 0.8, -1.6, // Front Left
+                                           -0.0, 0.8, -1.6, // Front Right
+                                           -0.0, 0.8, -1.6, // Rear Left
+                                           -0.0, 0.8, -1.6, // Rear Right
 
-    this->positionBaseToHipInBaseFrame_[0] << 0.3, 0.104, 0.0;
-    this->positionBaseToHipInBaseFrame_[1] << 0.3, -0.104, 0.0;
-    this->positionBaseToHipInBaseFrame_[2] << -0.3, 0.104, 0.0;
-    this->positionBaseToHipInBaseFrame_[3] << -0.3, -0.104, 0.0;
+    this->positionBaseToHipInBaseFrame_[0] << 0.1805, 0.047, 0.0;
+    this->positionBaseToHipInBaseFrame_[1] << 0.1805, -0.047, 0.0;
+    this->positionBaseToHipInBaseFrame_[2] << -0.1805, 0.047, 0.0;
+    this->positionBaseToHipInBaseFrame_[3] << -0.1805, -0.047, 0.0;
 
-    this->positionHipToThighInHipFrame_[0] << 0.06, 0.08381, -0.0;
-    this->positionHipToThighInHipFrame_[1] << 0.06, -0.08381, -0.0;
-    this->positionHipToThighInHipFrame_[2] << -0.06, 0.08381, -0.0;
-    this->positionHipToThighInHipFrame_[3] << -0.06, -0.08381, -0.0;
+    this->positionHipToThighInHipFrame_[0] << 0.00, 0.08381, -0.0;
+    this->positionHipToThighInHipFrame_[1] << 0.00, -0.08381, -0.0;
+    this->positionHipToThighInHipFrame_[2] << 0.00, 0.08381, -0.0;
+    this->positionHipToThighInHipFrame_[3] << 0.00, -0.08381, -0.0;
 
-    this->positionThighToShankInThighFrame_[0] << 0.0, 0.1003, -0.285;
-    this->positionThighToShankInThighFrame_[1] << 0.0, -0.1003, -0.285;
-    this->positionThighToShankInThighFrame_[2] << 0.0, 0.1003, -0.285;
-    this->positionThighToShankInThighFrame_[3] << 0.0, -0.1003, -0.285;
+    this->positionThighToShankInThighFrame_[0] << 0.0, 0.000, -0.2;
+    this->positionThighToShankInThighFrame_[1] << 0.0, 0.000, -0.2;
+    this->positionThighToShankInThighFrame_[2] << 0.0, 0.000, -0.2;
+    this->positionThighToShankInThighFrame_[3] << 0.0, 0.000, -0.2;
 
-    this->positionShankToFootInShankFrame_[0] << 0.08795, -0.01305, -0.33797;
-    this->positionShankToFootInShankFrame_[1] << 0.08795, 0.01305, -0.33797;
-    this->positionShankToFootInShankFrame_[2] << -0.08795, -0.01305, -0.33797;
-    this->positionShankToFootInShankFrame_[3] << -0.08795, 0.01305, -0.33797;
+    this->positionShankToFootInShankFrame_[0] << 0.00, 0.00, -0.2;
+    this->positionShankToFootInShankFrame_[1] << 0.00, 0.00, -0.2;
+    this->positionShankToFootInShankFrame_[2] << 0.00, 0.00, -0.2;
+    this->positionShankToFootInShankFrame_[3] << 0.00, 0.00, -0.2;
 
-    this->positionShankToFootInShankFrame_[0][2] += 0.0225;
-    this->positionShankToFootInShankFrame_[1][2] += 0.0225;
-    this->positionShankToFootInShankFrame_[2][2] += 0.0225;
-    this->positionShankToFootInShankFrame_[3][2] += 0.0225;
+    this->positionShankToFootInShankFrame_[0][2] += 0.018;
+    this->positionShankToFootInShankFrame_[1][2] += 0.018;
+    this->positionShankToFootInShankFrame_[2][2] += 0.018;
+    this->positionShankToFootInShankFrame_[3][2] += 0.018;
 
     for (int k = 0; k < 4; k++) {
       this->footIds_[k] = 3 * k + 3;
@@ -64,7 +64,7 @@ class ModelParametersAnymalC100 : public ModelParametersBase<T, 4> {
     //}
     }
 
-    ~ModelParametersAnymalC100() = default;
+    ~ModelParametersA1() = default;
 
   protected:
 };

@@ -16,6 +16,7 @@ include_directories(include
       ${EIGEN3_INCLUDE_DIRS})
 
 if (${BUILD_TEST})
+message(STATUS "test")
 add_executable(test_terrain_generator
         test/test_terrain_generator.cpp)
 target_link_libraries(test_terrain_generator
@@ -46,6 +47,12 @@ target_link_libraries(test_foot_motion
         ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
 target_compile_options(test_foot_motion PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
 
+add_executable(test_foot_motion_a1
+        test/test_foot_motion_a1.cpp)
+target_link_libraries(test_foot_motion_a1
+        ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
+target_compile_options(test_foot_motion_a1 PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
+
 add_executable(test_contacts
         test/test_contacts.cpp)
 target_link_libraries(test_contacts
@@ -75,6 +82,7 @@ add_executable(test_disturbance
 target_link_libraries(test_disturbance
         ${${PROJECT_NAME}_LIBRARIES} raisim::raisim yaml-cpp)
 target_compile_options(test_disturbance PRIVATE -mtune=native -fPIC -O3 -g -mno-avx2)
+
 endif()
 
 
