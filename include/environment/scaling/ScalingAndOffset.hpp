@@ -16,6 +16,8 @@
  * =====================================================================================
  */
 
+#pragma once
+
 #include "common/message_macros.hpp"
 #include <Eigen/Core>
 #include <yaml-cpp/yaml.h>

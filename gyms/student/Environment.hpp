@@ -20,6 +20,7 @@
 #include "environment/disturbance/PushDisturbance.hpp"
 #include "environment/observation/InternalObservation.hpp"
 #include "environment/observation/PrivilegedObservation.hpp"
+#include "environment/observation/HistoryObservation.hpp"
 #include "environment/command/Command.hpp"
 #include "environment/command/CommandViewer.hpp"
 #include "environment/terrain/LocalTerrainViewer.hpp"
@@ -62,7 +63,7 @@ class ENVIRONMENT : public RaisimGymEnv {
 
     /// MUST BE DONE FOR ALL ENVIRONMENTS
     obDim_ = 6212; 
-    actionDim_ = 16;
+    actionDim_ = 16 + 64;
 
     /// Reward coefficients
     rewards_.initializeFromConfigurationFile (cfg["reward"]);
@@ -114,6 +115,8 @@ class ENVIRONMENT : public RaisimGymEnv {
     foot_target = footMotion_->advance(deltaFreq);
     foot_target_hist2_ = foot_target;
     foot_target_hist1_ = foot_target;
+
+    stateHistObservation_->reset();
     badlyConditioned_ = false;
     it_ = 0;
   }
@@ -125,9 +128,15 @@ class ENVIRONMENT : public RaisimGymEnv {
     }
     
     Eigen::Matrix<float, 12, 1> gc_target, foot_target;
-    Eigen::Matrix<float, 16, 1> actionScaled; actionScaled.setZero();
+    Eigen::Matrix<float, 16, 1> actionUnscaled;// actionUnscaled.setZero();
+    Eigen::Matrix<float, 16, 1> actionScaled;// actionScaled.setZero();
 
-    actionScaled = actionScaling_->apply(action.template cast<float>());
+    //take into account only the 'real' action, not the 
+    actionUnscaled = action.template head<16>().template cast<float>();
+    if (visualize_)
+      std::cout << "ActionUnscaled: " << actionUnscaled.transpose() << std::endl;
+
+    actionScaled = actionScaling_->apply(actionUnscaled);
     command_->updateCommand();
     foot_target = footMotion_->advance(actionScaled.head(4));
     foot_target += actionScaled.tail(12);
@@ -239,25 +248,26 @@ class ENVIRONMENT : public RaisimGymEnv {
     state = stateScaling_->apply(state);
     ob.head(133) = state;
     ob.segment(133, 79) = privilegedObservation_->getObservation();
-    ob.segment(133 + 79, 6000) = stateHistObservation_.getObservation();
+    ob.segment(133 + 79, 6000) = stateHistObservation_->getObservation();
 
    // if (isnan(ob.norm()) || isinf(ob.norm())) {
    //   if (badlyConditioned_ == false) {
    //     std::cout << "observation badly conditioned even when action was good: " << ob.transpose() << std::endl;
    //     for (int i=0; i<ob.size(); i++) {
    //       if (isnan(ob[i]) || isinf(ob[i]))
-   //         std::cout << "nan for i=" << i << std::endl;
+   //         std::cout << "nan for i=" << i  << " ";
    //     }
+   //     std::cout << std::endl;
    //   }
    // }
   }
 
-  void getHistory(Eigen::Ref<EigenVec> ob) final {
+ // void getHistory(Eigen::Ref<EigenVec> ob) {
     //Eigen::Matrix<float, -1, 1> state = stateObservation_->getObservation();
     //state = stateScaling_->apply(state);
     //ob.head(state.size()) = state;
     //ob.segment(state.size(), 79) = privilegedObservation_->getObservation();
-    return stateHistObservation_.getObservation();
+ //   return stateHistObservation_->getObservation();
    // if (isnan(ob.norm()) || isinf(ob.norm())) {
    //   if (badlyConditioned_ == false) {
    //     std::cout << "observation badly conditioned even when action was good: " << ob.transpose() << std::endl;
@@ -267,7 +277,7 @@ class ENVIRONMENT : public RaisimGymEnv {
    //     }
    //   }
    // }
-  }
+ // }
   
   bool isTerminalState(float& terminalReward) final {
     terminalReward = float(terminalRewardCoeff_);
@@ -296,7 +306,7 @@ class ENVIRONMENT : public RaisimGymEnv {
   std::shared_ptr<FootMotionGenerator<float, 4>> footMotion_;
   std::shared_ptr<PrivilegedObservation<float, 4>> privilegedObservation_;
   std::shared_ptr<InternalObservation<float, 4>> stateObservation_;
-  std::shared_ptr<HistoryObservation<float, 4>> stateHistObservation_;
+  std::shared_ptr<HistoryObservation<float, 4, 100>> stateHistObservation_;
   std::shared_ptr<ScalingAndOffset<float>> stateScaling_;
   std::shared_ptr<ScalingAndOffset<float>> stateHistScaling_;
   std::shared_ptr<ScalingAndOffset<float>> actionScaling_;

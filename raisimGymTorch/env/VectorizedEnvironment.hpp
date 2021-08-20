@@ -73,17 +73,21 @@ class VectorizedEnvironment {
   }
 
   void observe(Eigen::Ref<EigenRowMajorMat> &ob) {
+    std::cout << "observe start." << std::endl;
 #pragma omp parallel for
     for (int i = 0; i < num_envs_; i++)
       environments_[i]->observe(ob.row(i));
+    std::cout << "observe done." << std::endl;
   }
 
   void step(Eigen::Ref<EigenRowMajorMat> &action,
             Eigen::Ref<EigenVec> &reward,
             Eigen::Ref<EigenBoolVec> &done) {
+    std::cout << "step start." << std::endl;
 #pragma omp parallel for
     for (int i = 0; i < num_envs_; i++)
       perAgentStep(i, action, reward, done);
+    std::cout << "step done." << std::endl;
   }
 
   void turnOnVisualization() { if(render_) environments_[0]->turnOnVisualization(); }

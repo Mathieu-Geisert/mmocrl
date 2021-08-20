@@ -33,6 +33,7 @@ class RaisimSbGymVecEnv(VecEnv):
         self._reward = np.zeros(self.num_envs, dtype=np.float32)
         self._done = np.zeros(self.num_envs, dtype=np.bool)
         self.rewards = [[] for _ in range(self.num_envs)]
+        self.reward_range = [-1.0, 1.0]
         self.seed(seed)
         self.actions = None
 
