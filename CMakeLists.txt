@@ -108,7 +108,7 @@ ENDMACRO()
 ####################
 ### dependencies ###
 ####################
-set(RAISIM_DIR "/home/pshah/Applications/raisim/raisim_ws/raisimLib")
+set(RAISIM_DIR "/home/mgeisert/raisim_ws/src/raisim")
 add_subdirectory(${RAISIM_DIR}/thirdParty/pybind11 pybind11)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
